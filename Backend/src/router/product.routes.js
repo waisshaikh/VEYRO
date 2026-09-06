@@ -27,10 +27,12 @@ router.post("/", authenticateSeller, upload.array('images', 7), productValidator
 router.get("/seller", authenticateSeller, getSellerProduct)
 
 // Seller variant endpoints
-router.post("/seller/product/:productId/variants", authenticateSeller, addVariant);
+router.post("/seller/product/:productId/variants", authenticateSeller, upload.array('images', 7), addVariant);
 router.patch("/seller/product/:productId/variants/:variantId/stock", authenticateSeller, updateVariantStock);
-router.put("/seller/product/:productId/variants/:variantId", authenticateSeller, updateVariant);
+router.put("/seller/product/:productId/variants/:variantId", authenticateSeller, upload.array('images', 7), updateVariant);
 router.delete("/seller/product/:productId/variants/:variantId", authenticateSeller, deleteVariant);
+
+
 
 // display All product for user 
 router.get("/", getAllProduct);
