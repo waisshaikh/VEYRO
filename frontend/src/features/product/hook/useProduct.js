@@ -1,51 +1,69 @@
-import { createProduct,getProductById,getSellerProduct, gettAllProducte } from "../services/product.api";
-import {useDispatch} from "react-redux";
-import {setSellerProduct,setproducts} from "../state/product.store.js"
+import {
+    createProduct,
+    getProductById,
+    getSellerProduct,
+    gettAllProducte,
+    addVariantApi,
+    updateVariantStockApi,
+    updateVariantApi,
+    deleteVariantApi
+} from "../services/product.api";
+import { useDispatch } from "react-redux";
+import { setSellerProduct, setproducts } from "../state/product.store.js"
 
-
-
-export const useProduct = ()=>{
-
+export const useProduct = () => {
     const dispath = useDispatch()
 
-    
     async function handleCreateproduct(formData) {
         const data = await createProduct(formData)
         return data.product
-        
     }
 
-     async function handleGetSellerproduct() {
+    async function handleGetSellerproduct() {
         const data = await getSellerProduct()
         dispath(setSellerProduct(data.products))
-
         return data.products
-        
     }
 
-    async function handelGetProduct (){
-
+    async function handelGetProduct() {
         const data = await gettAllProducte()
         dispath(setproducts(data.products))
-        return data.products   
+        return data.products
     }
 
     async function handleGetProductByid(productId) {
         const data = await getProductById(productId)
         return data.product
-
-        
     }
 
+    async function handleAddVariant(productId, variantData) {
+        const data = await addVariantApi(productId, variantData);
+        return data;
+    }
 
+    async function handleUpdateVariantStock(productId, variantId, stock) {
+        const data = await updateVariantStockApi(productId, variantId, stock);
+        return data;
+    }
+
+    async function handleUpdateVariant(productId, variantId, variantData) {
+        const data = await updateVariantApi(productId, variantId, variantData);
+        return data;
+    }
+
+    async function handleDeleteVariant(productId, variantId) {
+        const data = await deleteVariantApi(productId, variantId);
+        return data;
+    }
 
     return {
         handleCreateproduct,
-       
         handleGetSellerproduct,
-      
         handelGetProduct,
-
-        handleGetProductByid
+        handleGetProductByid,
+        handleAddVariant,
+        handleUpdateVariantStock,
+        handleUpdateVariant,
+        handleDeleteVariant
     }
-}   
+}
