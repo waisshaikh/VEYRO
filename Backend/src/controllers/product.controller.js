@@ -1,3 +1,4 @@
+import { json } from "express";
 import productModel from "../models/product.model.js";
 import { uploadFile } from "../services/storage.service.js";
 
@@ -92,149 +93,264 @@ export async function getAllProduct(req, res) {
     })
 }
 
-// ── Variant Management Handlers ─────────────────────────────────────────────
+// ── Variant Management Handlers ─────────────────────────────────────────────                                                                         
 
-export async function addVariant(req, res) {
-    try {
-        const { productId } = req.params;
-        const { priceAmount, priceCurrency, stock, attributes, images } = req.body;
-        const sellerId = req.user?._id;
 
-        const product = await productModel.findOne({ _id: productId, seller: sellerId });
-        if (!product) {
-            return res.status(404).json({ success: false, message: "Product not found or unauthorized" });
-        }
+export async function addProductVarient(req,res) {
 
-        const formattedImages = Array.isArray(images)
-            ? images.map((img) => (typeof img === "string" ? { url: img } : img))
-            : [];
+    const productId =req.params.productId
+    const product = await findById(productId)
 
-        const newVariant = {
-            price: {
-                amount: Number(priceAmount) || product.price?.amount || 0,
-                currency: priceCurrency || product.price?.currency || "INR"
-            },
-            stock: Math.max(0, Number(stock) || 0),
-            attributes: attributes || {},
-            images: formattedImages
-        };
+    if(!productId){
+        
 
-        product.variants.push(newVariant);
-        await product.save();
-
-        const createdVariant = product.variants[product.variants.length - 1];
-
-        res.status(201).json({
-            success: true,
-            message: "Variant added successfully",
-            variant: createdVariant,
-            product
-        });
-    } catch (error) {
-        console.error("Add variant error:", error);
-        res.status(500).json({ success: false, message: "Failed to add variant", error: error.message });
     }
+
+
+    const files = req.files;
+    const images = [];
+   if(files || files.length!==0){
+
+    await Promise.all(files.map(async(file)=>{
+        const image = await uploadFile({
+            buffer:file.buffer,
+            fileName:file.originalname 
+        })
+
+        return  images.push(images)
+
+    })).map(image=> images.push(image))
+
+   }
+    
+   const price = req.body.priceAmount
+   const stock = req.body.stock
+   const attributes = json.parse(req.body.attributes || "{}")
 }
 
-export async function updateVariantStock(req, res) {
-    try {
-        const { productId, variantId } = req.params;
-        const { stock } = req.body;
-        const sellerId = req.user?._id;
+// export async function addVariant(req, res) {
+//     try {
+//         const { productId } = req.params;
+//         const { priceAmount, priceCurrency, stock, attributes, existingImages, images } = req.body;
+//         const sellerId = req.user?._id;
 
-        const product = await productModel.findOne({ _id: productId, seller: sellerId });
-        if (!product) {
-            return res.status(404).json({ success: false, message: "Product not found or unauthorized" });
-        }
+//         const product = await productModel.findOne({ _id: productId, seller: sellerId });
+//         if (!product) {
+//             return res.status(404).json({ success: false, message: "Product not found or unauthorized" });
+//         }
 
-        const variant = product.variants.id(variantId);
-        if (!variant) {
-            return res.status(404).json({ success: false, message: "Variant not found" });
-        }
+//         // Upload any newly provided image files
+//         let uploadedImages = [];
+//         if (req.files && req.files.length > 0) {
+//             uploadedImages = await Promise.all(
+//                 req.files.map(async (file) => {
+//                     const url = await uploadFile({
+//                         buffer: file.buffer,
+//                         fileName: file.originalname,
+//                         mimeType: file.mimetype
+//                     });
+//                     return { url };
+//                 })
+//             );
+//         }
 
-        variant.stock = Math.max(0, Number(stock) || 0);
-        await product.save();
+//         // Parse any existing or gallery-picked images
+//         let existingList = [];
+//         const rawExisting = existingImages || images;
+//         if (rawExisting) {
+//             try {
+//                 const parsed = typeof rawExisting === "string" ? JSON.parse(rawExisting) : rawExisting;
+//                 if (Array.isArray(parsed)) {
+//                     existingList = parsed
+//                         .map((img) => (typeof img === "string" ? { url: img } : img))
+//                         .filter((img) => img && img.url);
+//                 } else if (typeof parsed === "object" && parsed?.url) {
+//                     existingList = [parsed];
+//                 }
+//             } catch (e) {
+//                 if (typeof rawExisting === "string" && rawExisting.trim().startsWith("http")) {
+//                     existingList = [{ url: rawExisting.trim() }];
+//                 }
+//             }
+//         }
 
-        res.status(200).json({
-            success: true,
-            message: "Stock updated successfully",
-            variant,
-            product
-        });
-    } catch (error) {
-        console.error("Update variant stock error:", error);
-        res.status(500).json({ success: false, message: "Failed to update stock", error: error.message });
-    }
-}
+//         const combinedImages = [...existingList, ...uploadedImages].slice(0, 7);
 
-export async function updateVariant(req, res) {
-    try {
-        const { productId, variantId } = req.params;
-        const { priceAmount, priceCurrency, stock, attributes, images } = req.body;
-        const sellerId = req.user?._id;
+//         let parsedAttributes = attributes || {};
+//         if (typeof attributes === "string") {
+//             try {
+//                 parsedAttributes = JSON.parse(attributes);
+//             } catch (e) {
+//                 parsedAttributes = {};
+//             }
+//         }
 
-        const product = await productModel.findOne({ _id: productId, seller: sellerId });
-        if (!product) {
-            return res.status(404).json({ success: false, message: "Product not found or unauthorized" });
-        }
+//         const newVariant = {
+//             price: {
+//                 amount: Number(priceAmount) || product.price?.amount || 0,
+//                 currency: priceCurrency || product.price?.currency || "INR"
+//             },
+//             stock: Math.max(0, Number(stock) || 0),
+//             attributes: parsedAttributes,
+//             images: combinedImages
+//         };
 
-        const variant = product.variants.id(variantId);
-        if (!variant) {
-            return res.status(404).json({ success: false, message: "Variant not found" });
-        }
+//         product.variants.push(newVariant);
+//         await product.save();
 
-        if (priceAmount !== undefined) {
-            variant.price.amount = Number(priceAmount);
-        }
-        if (priceCurrency) {
-            variant.price.currency = priceCurrency;
-        }
-        if (stock !== undefined) {
-            variant.stock = Math.max(0, Number(stock));
-        }
-        if (attributes !== undefined) {
-            variant.attributes = attributes;
-        }
-        if (images !== undefined) {
-            variant.images = Array.isArray(images)
-                ? images.map((img) => (typeof img === "string" ? { url: img } : img))
-                : [];
-        }
+//         const createdVariant = product.variants[product.variants.length - 1];
 
-        await product.save();
+//         res.status(201).json({
+//             success: true,
+//             message: "Variant added successfully",
+//             variant: createdVariant,
+//             product
+//         });
+//     } catch (error) {
+//         console.error("Add variant error:", error);
+//         res.status(500).json({ success: false, message: "Failed to add variant", error: error.message });
+//     }
+// }
 
-        res.status(200).json({
-            success: true,
-            message: "Variant updated successfully",
-            variant,
-            product
-        });
-    } catch (error) {
-        console.error("Update variant error:", error);
-        res.status(500).json({ success: false, message: "Failed to update variant", error: error.message });
-    }
-}
+// export async function updateVariantStock(req, res) {
+//     try {
+//         const { productId, variantId } = req.params;
+//         const { stock } = req.body;
+//         const sellerId = req.user?._id;
 
-export async function deleteVariant(req, res) {
-    try {
-        const { productId, variantId } = req.params;
-        const sellerId = req.user?._id;
+//         const product = await productModel.findOne({ _id: productId, seller: sellerId });
+//         if (!product) {
+//             return res.status(404).json({ success: false, message: "Product not found or unauthorized" });
+//         }
 
-        const product = await productModel.findOne({ _id: productId, seller: sellerId });
-        if (!product) {
-            return res.status(404).json({ success: false, message: "Product not found or unauthorized" });
-        }
+//         const variant = product.variants.id(variantId);
+//         if (!variant) {
+//             return res.status(404).json({ success: false, message: "Variant not found" });
+//         }
 
-        product.variants.pull({ _id: variantId });
-        await product.save();
+//         variant.stock = Math.max(0, Number(stock) || 0);
+//         await product.save();
 
-        res.status(200).json({
-            success: true,
-            message: "Variant deleted successfully",
-            product
-        });
-    } catch (error) {
-        console.error("Delete variant error:", error);
-        res.status(500).json({ success: false, message: "Failed to delete variant", error: error.message });
-    }
-}
+//         res.status(200).json({
+//             success: true,
+//             message: "Stock updated successfully",
+//             variant,
+//             product
+//         });
+//     } catch (error) {
+//         console.error("Update variant stock error:", error);
+//         res.status(500).json({ success: false, message: "Failed to update stock", error: error.message });
+//     }
+// }
+
+// export async function updateVariant(req, res) {
+//     try {
+//         const { productId, variantId } = req.params;
+//         const { priceAmount, priceCurrency, stock, attributes, existingImages, images } = req.body;
+//         const sellerId = req.user?._id;
+
+//         const product = await productModel.findOne({ _id: productId, seller: sellerId });
+//         if (!product) {
+//             return res.status(404).json({ success: false, message: "Product not found or unauthorized" });
+//         }
+
+//         const variant = product.variants.id(variantId);
+//         if (!variant) {
+//             return res.status(404).json({ success: false, message: "Variant not found" });
+//         }
+
+//         if (priceAmount !== undefined) {
+//             variant.price.amount = Number(priceAmount);
+//         }
+//         if (priceCurrency) {
+//             variant.price.currency = priceCurrency;
+//         }
+//         if (stock !== undefined) {
+//             variant.stock = Math.max(0, Number(stock));
+//         }
+//         if (attributes !== undefined) {
+//             let parsedAttributes = attributes;
+//             if (typeof attributes === "string") {
+//                 try {
+//                     parsedAttributes = JSON.parse(attributes);
+//                 } catch (e) {
+//                     parsedAttributes = {};
+//                 }
+//             }
+//             variant.attributes = parsedAttributes;
+//         }
+
+//         // Upload any newly provided image files
+//         let uploadedImages = [];
+//         if (req.files && req.files.length > 0) {
+//             uploadedImages = await Promise.all(
+//                 req.files.map(async (file) => {
+//                     const url = await uploadFile({
+//                         buffer: file.buffer,
+//                         fileName: file.originalname,
+//                         mimeType: file.mimetype
+//                     });
+//                     return { url };
+//                 })
+//             );
+//         }
+
+//         const rawExisting = existingImages !== undefined ? existingImages : images;
+//         if (rawExisting !== undefined || uploadedImages.length > 0) {
+//             let existingList = [];
+//             if (rawExisting) {
+//                 try {
+//                     const parsed = typeof rawExisting === "string" ? JSON.parse(rawExisting) : rawExisting;
+//                     if (Array.isArray(parsed)) {
+//                         existingList = parsed
+//                             .map((img) => (typeof img === "string" ? { url: img } : img))
+//                             .filter((img) => img && img.url);
+//                     } else if (typeof parsed === "object" && parsed?.url) {
+//                         existingList = [parsed];
+//                     }
+//                 } catch (e) {
+//                     if (typeof rawExisting === "string" && rawExisting.trim().startsWith("http")) {
+//                         existingList = [{ url: rawExisting.trim() }];
+//                     }
+//                 }
+//             }
+//             variant.images = [...existingList, ...uploadedImages].slice(0, 7);
+//         }
+
+//         await product.save();
+
+//         res.status(200).json({
+//             success: true,
+//             message: "Variant updated successfully",
+//             variant,
+//             product
+//         });
+//     } catch (error) {
+//         console.error("Update variant error:", error);
+//         res.status(500).json({ success: false, message: "Failed to update variant", error: error.message });
+//     }
+// }
+
+// export async function deleteVariant(req, res) {
+//     try {
+//         const { productId, variantId } = req.params;
+//         const sellerId = req.user?._id;
+
+//         const product = await productModel.findOne({ _id: productId, seller: sellerId });
+//         if (!product) {
+//             return res.status(404).json({ success: false, message: "Product not found or unauthorized" });
+//         }
+
+//         product.variants.pull({ _id: variantId });
+//         await product.save();
+
+//         res.status(200).json({
+//             success: true,
+//             message: "Variant deleted successfully",
+//             product
+//         });
+//     } catch (error) {
+//         console.error("Delete variant error:", error);
+//         res.status(500).json({ success: false, message: "Failed to delete variant", error: error.message });
+//     }
+// }
