@@ -99,14 +99,19 @@ export async function getAllProduct(req, res) {
 export async function addProductVarient(req,res) {
 
     const productId =req.params.productId
-    const product = await findById(productId)
+    const product = await findOne({
+        _id:productId,
+        seller:req.user._id
+    });
 
-    if(!productId){
-        
+
+    if(!productId){ 
+        return req.status(401).json({ 
+            message:"product not found",
+            success:false
+        })
 
     }
-
-
     const files = req.files;
     const images = [];
    if(files || files.length!==0){
@@ -126,6 +131,8 @@ export async function addProductVarient(req,res) {
    const price = req.body.priceAmount
    const stock = req.body.stock
    const attributes = json.parse(req.body.attributes || "{}")
+
+   console.log(product,images,price,stock,attributes)
 }
 
 // export async function addVariant(req, res) {
