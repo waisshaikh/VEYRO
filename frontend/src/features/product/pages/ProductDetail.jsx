@@ -29,12 +29,29 @@ function formatPrice(price) {
 
 export default function ProductDetail() {
   const { productId } = useParams();
-  const { handleGetProductByid } = useProduct();
+  const { handleGetProductByid} = useProduct(); 
 
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedAttributes, setSelectedAttributes] = useState({}); // Store selected attribute values
+
+  // Helper to convert attributes to object
+  const getAttributesObject = (attrs) => {
+    if (!attrs) return {};
+    if (attrs instanceof Map) return Object.fromEntries(attrs);
+    if (Array.isArray(attrs)) {
+      return attrs.reduce((acc, item) => {
+        if (item && typeof item === "object" && item.key && item.value !== undefined) {
+          acc[item.key] = item.value;
+        }
+        return acc;
+      }, {});
+    }
+    if (typeof attrs === "object") return attrs;
+    return {};
+  };
 
   useEffect(() => {
     async function loadProduct() {
@@ -44,6 +61,12 @@ export default function ProductDetail() {
         const data = await handleGetProductByid(productId);
         setProduct(data);
         setSelectedImage(getImageUrl(data?.images?.[0]));
+        
+        // Initialize with first variant's attributes
+        if (data?.variants && data.variants.length > 0) {
+          const firstAttrs = getAttributesObject(data.variants[0].attributes);
+          setSelectedAttributes(firstAttrs);
+        }
       } catch (err) {
         setError(
           err?.response?.data?.message ||
@@ -57,10 +80,55 @@ export default function ProductDetail() {
     loadProduct();
   }, [productId]);
 
-  const images = useMemo(() => {
-    if (!product?.images?.length) return [];
-    return product.images.map(getImageUrl).filter(Boolean);
+  // Get all available attribute keys and their unique values from variants
+  const attributeOptions = useMemo(() => {
+    if (!product?.variants) return {};
+    
+    const attrs = {};
+    product.variants.forEach((variant) => {
+      const variantAttrs = getAttributesObject(variant.attributes);
+      Object.entries(variantAttrs).forEach(([key, value]) => {
+        if (!attrs[key]) {
+          attrs[key] = new Set();
+        }
+        attrs[key].add(value);
+      });
+    });
+    
+    // Convert Sets to Arrays
+    Object.keys(attrs).forEach(key => {
+      attrs[key] = Array.from(attrs[key]);
+    });
+    
+    return attrs;
   }, [product]);
+
+  // Find matching variant based on selected attributes
+  const selectedVariant = useMemo(() => {
+    if (!product?.variants || Object.keys(selectedAttributes).length === 0) return null;
+    
+    return product.variants.find((variant) => {
+      const variantAttrs = getAttributesObject(variant.attributes);
+      return Object.entries(selectedAttributes).every(([key, value]) => {
+        return variantAttrs[key] === value;
+      });
+    });
+  }, [product, selectedAttributes]);
+
+  // Images: use variant images if available, otherwise product images
+  const images = useMemo(() => {
+    const imagesToUse = selectedVariant?.images && selectedVariant.images.length > 0 
+      ? selectedVariant.images 
+      : product?.images || [];
+    
+    return imagesToUse
+      .map((img) => {
+        if (typeof img === "string") return getImageUrl(img);
+        if (img?.url) return getImageUrl(img.url);
+        return null;
+      })
+      .filter(Boolean);
+  }, [product, selectedVariant]);
 
   const selectedImageIndex = images.findIndex((image) => image === selectedImage);
   const canSlideImages = images.length > 1;
@@ -78,6 +146,13 @@ export default function ProductDetail() {
     const nextIndex = currentIndex === images.length - 1 ? 0 : currentIndex + 1;
     setSelectedImage(images[nextIndex]);
   };
+
+  // Update image when variant changes
+  useEffect(() => {
+    if (images.length > 0) {
+      setSelectedImage(images[0]);
+    }
+  }, [selectedVariant]);
 
   /* ─────────────────────────────────────────────
      Loading
@@ -256,14 +331,89 @@ export default function ProductDetail() {
               {product.tittle || "Untitled product"}
             </h1>
 
-            <p className="mt-5 font-serif text-2xl text-[#17140F]">
-              {formatPrice(product.price)}
-            </p>
-            <p className="mt-1 text-xs text-[#8A8175]">
-              Inclusive of all applicable taxes
-            </p>
+            {/* Price Section */}
+            <div className="mt-5">
+              <p className="font-serif text-2xl text-[#17140F]">
+                {formatPrice(selectedVariant?.price || product.price)}
+              </p>
+              <p className="mt-1 text-xs text-[#8A8175]">
+                Inclusive of all applicable taxes
+              </p>
+            </div>
 
             <div className="my-8 h-px bg-[#E8E3D9]" />
+
+            {/* Variant Attribute Selector */}
+            {Object.keys(attributeOptions).length > 0 && (
+              <div className="mb-8 space-y-4">
+                {Object.entries(attributeOptions).map(([attrKey, attrValues]) => (
+                  <div key={attrKey}>
+                    <h3 className="mb-2 text-sm font-medium text-[#17140F]">
+                      {attrKey}
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {attrValues.map((value) => {
+                        const isSelected = selectedAttributes[attrKey] === value;
+                        return (
+                          <button
+                            key={value}
+                            onClick={() => {
+                              setSelectedAttributes((prev) => ({
+                                ...prev,
+                                [attrKey]: value,
+                              }));
+                            }}
+                            className={`rounded-md border-2 px-4 py-2 text-sm font-medium transition ${
+                              isSelected
+                                ? "border-[#17140F] bg-[#17140F] text-[#FAFAF8]"
+                                : "border-[#D4CBBB] text-[#17140F] hover:border-[#17140F]"
+                            }`}
+                          >
+                            {value}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Stock Status */}
+            {selectedVariant && (
+              <div className="mb-6">
+                <p className={`text-sm font-medium ${
+                  selectedVariant.stock > 0 ? "text-green-600" : "text-red-600"
+                }`}>
+                  {selectedVariant.stock > 0 
+                    ? `${selectedVariant.stock} in stock` 
+                    : "Out of stock"}
+                </p>
+              </div>
+            )}
+
+            {/* Variant Specifications */}
+            {selectedVariant && (
+              <div className="mb-8 rounded-sm bg-[#F5F0E8] p-4">
+                <h3 className="mb-3 text-sm font-medium text-[#17140F]">
+                  Specifications
+                </h3>
+                <div className="space-y-2">
+                  {Object.entries(selectedAttributes).map(([key, value]) => (
+                    <div key={key} className="flex justify-between text-sm">
+                      <span className="text-[#8A8175]">{key}:</span>
+                      <span className="font-medium text-[#17140F]">{value}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[#8A8175]">Price:</span>
+                    <span className="font-medium text-[#17140F]">
+                      {formatPrice(selectedVariant.price || product.price)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div>
               <h2 className="text-sm font-medium text-[#17140F]">Description</h2>
@@ -283,13 +433,15 @@ export default function ProductDetail() {
             <div className="mt-9 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <button
                 type="button"
-                className="h-13 rounded-sm bg-[#17140F] px-6 py-4 text-sm font-medium text-[#FAFAF8] transition hover:bg-[#2B2620] active:scale-[0.99]"
+                disabled={!selectedVariant || selectedVariant.stock === 0}
+                className="h-13 rounded-sm bg-[#17140F] px-6 py-4 text-sm font-medium text-[#FAFAF8] transition hover:bg-[#2B2620] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Add to cart
               </button>
               <button
                 type="button"
-                className="h-13 rounded-sm border border-[#17140F] px-6 py-4 text-sm font-medium text-[#17140F] transition hover:bg-[#17140F] hover:text-[#FAFAF8] active:scale-[0.99]"
+                disabled={!selectedVariant || selectedVariant.stock === 0}
+                className="h-13 rounded-sm border border-[#17140F] px-6 py-4 text-sm font-medium text-[#17140F] transition hover:bg-[#17140F] hover:text-[#FAFAF8] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Buy now
               </button>

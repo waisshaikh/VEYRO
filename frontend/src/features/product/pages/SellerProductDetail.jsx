@@ -25,10 +25,11 @@ const SellerProductDetail = () => {
   // Hook actions
   const {
     handleGetProductByid,
+    handleGetSellerproduct,
     handleAddVariant,
-    handleUpdateVariantStock,
     handleUpdateVariant,
-    handleDeleteVariant,
+    handleUpdateVariantStock,
+    handleDeleteVariant
   } = useProduct();
 
   // Local state for stock inline edits: { [variantId]: number }

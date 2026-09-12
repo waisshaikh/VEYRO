@@ -7,7 +7,6 @@ import {
     getAllProduct,
     getProductDetail,
     addProductVarient,
-    // addVariant,
     // updateVariantStock,
     // updateVariant,
     // deleteVariant
@@ -19,7 +18,7 @@ const upload = multer({
     limits: {
         fileSize: 5 * 1024 * 1024  //5 MB
     }
-    
+
 })
 
 const router = express.Router();

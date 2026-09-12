@@ -3,7 +3,7 @@ import {
     getProductById,
     getSellerProduct,
     gettAllProducte,
-    addVariantApi,
+    addProductVarient,
     updateVariantStockApi,
     updateVariantApi,
     deleteVariantApi
@@ -36,8 +36,8 @@ export const useProduct = () => {
         return data.product
     }
 
-    async function handleAddVariant(productId, variantData) {
-        const data = await addVariantApi(productId, variantData);
+    async function handleAddVariant(productId, formData) {
+        const data = await addProductVarient(productId, formData);
         return data;
     }
 
@@ -46,8 +46,8 @@ export const useProduct = () => {
         return data;
     }
 
-    async function handleUpdateVariant(productId, variantId, variantData) {
-        const data = await updateVariantApi(productId, variantId, variantData);
+    async function handleUpdateVariant(productId, variantId, formData) {
+        const data = await updateVariantApi(productId, variantId, formData);
         return data;
     }
 

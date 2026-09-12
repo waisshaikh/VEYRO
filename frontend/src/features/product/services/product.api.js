@@ -34,9 +34,11 @@ export async function getProductById(productId) {
     return response.data
 }
 
-export async function addVariantApi(productId, variantData) {
-    const response = await productApiInstance.post(`/seller/product/${productId}/variants`, variantData);
-    return response.data;
+
+
+export async function addProductVarient(productId, formData) {
+    const response = await productApiInstance.post(`/seller/product/${productId}/variants`, formData)
+    return response.data
 }
 
 export async function updateVariantStockApi(productId, variantId, stock) {
@@ -44,8 +46,8 @@ export async function updateVariantStockApi(productId, variantId, stock) {
     return response.data;
 }
 
-export async function updateVariantApi(productId, variantId, variantData) {
-    const response = await productApiInstance.put(`/seller/product/${productId}/variants/${variantId}`, variantData);
+export async function updateVariantApi(productId, variantId, formData) {
+    const response = await productApiInstance.put(`/seller/product/${productId}/variants/${variantId}`, formData);
     return response.data;
 }
 
