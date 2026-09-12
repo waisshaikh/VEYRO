@@ -96,43 +96,71 @@ export async function getAllProduct(req, res) {
 // ── Variant Management Handlers ─────────────────────────────────────────────                                                                         
 
 
-export async function addProductVarient(req,res) {
+export async function addProductVarient(req, res) {
+    try {
+        const productId = req.params.productId;
+        const product = await productModel.findOne({
+            _id: productId,
+            seller: req.user._id
+        });
 
-    const productId =req.params.productId
-    const product = await findOne({
-        _id:productId,
-        seller:req.user._id
-    });
+        if (!product) {
+            return res.status(404).json({
+                message: "Product not found",
+                success: false
+            });
+        }
 
+        // Upload images to ImageKit and format as objects
+        const images = [];
+        if (req.files && req.files.length > 0) {
+            const uploadedImages = await Promise.all(
+                req.files.map(async (file) => {
+                    const imageUrl = await uploadFile({
+                        buffer: file.buffer,
+                        fileName: file.originalname,
+                        mimeType: file.mimetype
+                    });
+                    // Return object with url property to match schema
+                    return { url: imageUrl };
+                })
+            );
+            images.push(...uploadedImages);
+        }
 
-    if(!productId){ 
-        return req.status(401).json({ 
-            message:"product not found",
-            success:false
-        })
+        const priceAmount = req.body.priceAmount;
+        const priceCurrency = req.body.priceCurrency || "INR";
+        const stock = req.body.stock;
+        const attributes = JSON.parse(req.body.attributes || "{}");
 
+        // Create variant object
+        const newVariant = {
+            price: {
+                amount: priceAmount,
+                currency: priceCurrency
+            },
+            stock,
+            attributes,
+            images
+        };
+
+        // Add variant to product
+        product.variants.push(newVariant);
+        await product.save();
+
+        res.status(201).json({
+            message: "Variant added successfully",
+            success: true,
+            product
+        });
+    } catch (error) {
+        console.error("Add variant error:", error);
+        res.status(500).json({
+            message: "Failed to add variant",
+            success: false,
+            error: error.message
+        });
     }
-    const files = req.files;
-    const images = [];
-   if(files || files.length!==0){
-
-    await Promise.all(files.map(async(file)=>{
-        const image = await uploadFile({
-            buffer:file.buffer,
-            fileName:file.originalname 
-        })
-
-        return  images.push(images)
-
-    })).map(image=> images.push(image))
-
-   }
-    
-   const price = req.body.priceAmount
-   const stock = req.body.stock
-   const attributes = json.parse(req.body.attributes || "{}")
-
-   console.log(product,images,price,stock,attributes)
 }
 
 // export async function addVariant(req, res) {

@@ -125,7 +125,7 @@ const SellerProductDetail = () => {
 
       // Check attributes
       if (v.attributes) {
-        const attrObj = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : v.attributes;
+        const attrObj = getAttributesObject(v.attributes);
         for (const [k, val] of Object.entries(attrObj)) {
           if (String(k).toLowerCase().includes(q) || String(val).toLowerCase().includes(q)) {
             return true;
@@ -214,6 +214,15 @@ const SellerProductDetail = () => {
   const getAttributesObject = (attrs) => {
     if (!attrs) return {};
     if (attrs instanceof Map) return Object.fromEntries(attrs);
+    if (Array.isArray(attrs)) {
+      // Convert array of { key, value } objects to a single object
+      return attrs.reduce((acc, item) => {
+        if (item && typeof item === "object" && item.key && item.value !== undefined) {
+          acc[item.key] = item.value;
+        }
+        return acc;
+      }, {});
+    }
     if (typeof attrs === "object") return attrs;
     return {};
   };
