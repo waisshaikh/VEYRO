@@ -11,6 +11,8 @@ const CURRENCIES = [
 
 const MAX_IMAGES = 7;
 
+const SIZE_PRESETS = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
+
 export default function CreateProduct() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -23,6 +25,8 @@ export default function CreateProduct() {
     description: "",
     priceAmount: "",
     priceCurrency: "INR",
+    selectedSizes: [],
+    selectedColors: [],
   });
 
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -32,6 +36,7 @@ export default function CreateProduct() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [colorInput, setColorInput] = useState("");
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -153,6 +158,14 @@ export default function CreateProduct() {
 
     if (selectedFiles.length === 0) {
       errs.images = "At least one image is required.";
+    }
+
+    if (formData.selectedSizes.length === 0) {
+      errs.sizes = "Select at least one size.";
+    }
+
+    if (formData.selectedColors.length === 0) {
+      errs.colors = "Select at least one color.";
     }
 
     setErrors(errs);
@@ -385,6 +398,128 @@ export default function CreateProduct() {
                   />
                   {errors.priceAmount && (
                     <p className="text-xs text-red-600">{errors.priceAmount}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Sizes & Colors Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {/* Sizes */}
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Available Sizes
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {SIZE_PRESETS.map((size) => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => {
+                          setFormData((prev) => {
+                            const updated = prev.selectedSizes.includes(size)
+                              ? prev.selectedSizes.filter((s) => s !== size)
+                              : [...prev.selectedSizes, size];
+                            return { ...prev, selectedSizes: updated };
+                          });
+                          if (errors.sizes) {
+                            setErrors((prev) => ({ ...prev, sizes: "" }));
+                          }
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          formData.selectedSizes.includes(size)
+                            ? "bg-teal-600 text-white border border-teal-700"
+                            : "bg-slate-100 text-slate-700 border border-slate-200 hover:border-teal-400"
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                  {errors.sizes && (
+                    <p className="text-xs text-red-600">{errors.sizes}</p>
+                  )}
+                </div>
+
+                {/* Colors */}
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Available Colors
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="e.g. Black, Navy Blue, Red..."
+                      value={colorInput}
+                      onChange={(e) => setColorInput(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter" && colorInput.trim()) {
+                          e.preventDefault();
+                          const color = colorInput.trim();
+                          if (!formData.selectedColors.includes(color)) {
+                            setFormData((prev) => ({
+                              ...prev,
+                              selectedColors: [...prev.selectedColors, color],
+                            }));
+                            if (errors.colors) {
+                              setErrors((prev) => ({ ...prev, colors: "" }));
+                            }
+                          }
+                          setColorInput("");
+                        }
+                      }}
+                      className="flex-1 px-3.5 py-2.5 rounded-xl input-luxury text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (colorInput.trim()) {
+                          const color = colorInput.trim();
+                          if (!formData.selectedColors.includes(color)) {
+                            setFormData((prev) => ({
+                              ...prev,
+                              selectedColors: [...prev.selectedColors, color],
+                            }));
+                            if (errors.colors) {
+                              setErrors((prev) => ({ ...prev, colors: "" }));
+                            }
+                          }
+                          setColorInput("");
+                        }
+                      }}
+                      className="px-4 py-2.5 rounded-xl bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700 transition"
+                    >
+                      Add
+                    </button>
+                  </div>
+
+                  {/* Selected Colors Tags */}
+                  {formData.selectedColors.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {formData.selectedColors.map((color) => (
+                        <div
+                          key={color}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-50 border border-teal-200 rounded-lg text-xs font-medium text-slate-700"
+                        >
+                          {color}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData((prev) => ({
+                                ...prev,
+                                selectedColors: prev.selectedColors.filter((c) => c !== color),
+                              }));
+                            }}
+                            className="ml-1 text-teal-600 hover:text-red-600 font-bold"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {errors.colors && (
+                    <p className="text-xs text-red-600">{errors.colors}</p>
                   )}
                 </div>
               </div>
