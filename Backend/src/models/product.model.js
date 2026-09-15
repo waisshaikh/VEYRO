@@ -48,12 +48,9 @@ const ProductSchema = new mongoose.Schema({
             type:Map,
             of:String
         },
-        price:{
-            amount:{
-                type:priceSchema,
-                
-            }
-            
+        price: {
+            type: priceSchema,
+            required: true
         }
     }],
 

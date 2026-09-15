@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useParams, useNavigate } from "react-router";
 import { useProduct } from "../hook/useProduct";
+import { useCart } from "../../cart/hook/useCart";
 
 /* ─────────────────────────────────────────────
    Helpers
@@ -29,13 +30,16 @@ function formatPrice(price) {
 
 export default function ProductDetail() {
   const { productId } = useParams();
-  const { handleGetProductByid} = useProduct(); 
+  const navigate = useNavigate();
+  const { handleGetProductByid} = useProduct();
+  const { handleAddToCart, loading: cartLoading } = useCart();
 
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedAttributes, setSelectedAttributes] = useState({}); // Store selected attribute values
+  const [selectedAttributes, setSelectedAttributes] = useState({});
+  const [quantity, setQuantity] = useState(1); // Store selected attribute values
 
   // Helper to convert attributes to object
   const getAttributesObject = (attrs) => {
@@ -60,12 +64,19 @@ export default function ProductDetail() {
         setError("");
         const data = await handleGetProductByid(productId);
         setProduct(data);
-        setSelectedImage(getImageUrl(data?.images?.[0]));
-        
-        // Initialize with first variant's attributes
+
+        // Initialize with first variant's attributes and image
         if (data?.variants && data.variants.length > 0) {
           const firstAttrs = getAttributesObject(data.variants[0].attributes);
           setSelectedAttributes(firstAttrs);
+          const firstVariantImg =
+            data.variants[0]?.images?.[0]?.url ||
+            (typeof data.variants[0]?.images?.[0] === "string"
+              ? data.variants[0].images[0]
+              : null);
+          setSelectedImage(getImageUrl(firstVariantImg || data?.images?.[0]));
+        } else {
+          setSelectedImage(getImageUrl(data?.images?.[0]));
         }
       } catch (err) {
         setError(
@@ -147,12 +158,57 @@ export default function ProductDetail() {
     setSelectedImage(images[nextIndex]);
   };
 
-  // Update image when variant changes
+  // Update image when images list changes
   useEffect(() => {
     if (images.length > 0) {
       setSelectedImage(images[0]);
     }
-  }, [selectedVariant]);
+  }, [images]);
+
+  const handleSelectAttribute = (attrKey, value) => {
+    if (!product?.variants || product.variants.length === 0) return;
+
+    const targetAttributes = {
+      ...selectedAttributes,
+      [attrKey]: value,
+    };
+
+    // 1. Check if an exact variant matches all target attributes
+    let matchingVariant = product.variants.find((variant) => {
+      const variantAttrs = getAttributesObject(variant.attributes);
+      return Object.entries(targetAttributes).every(
+        ([k, v]) => variantAttrs[k] === v
+      );
+    });
+
+    // 2. If no exact match (e.g. clicked Maroon which only exists in 3XL, but current Size was XXL),
+    // switch to the variant that has this attribute value
+    if (!matchingVariant) {
+      matchingVariant = product.variants.find((variant) => {
+        const variantAttrs = getAttributesObject(variant.attributes);
+        return variantAttrs[attrKey] === value;
+      });
+    }
+
+    if (matchingVariant) {
+      const fullAttrs = getAttributesObject(matchingVariant.attributes);
+      setSelectedAttributes(fullAttrs);
+    } else {
+      setSelectedAttributes(targetAttributes);
+    }
+  };
+
+  const handleSelectVariant = (variant) => {
+    if (!variant) return;
+    const fullAttrs = getAttributesObject(variant.attributes);
+    setSelectedAttributes(fullAttrs);
+    const variantImg =
+      variant.images?.[0]?.url ||
+      (typeof variant.images?.[0] === "string" ? variant.images[0] : null);
+    if (variantImg) {
+      setSelectedImage(getImageUrl(variantImg));
+    }
+  };
 
   /* ─────────────────────────────────────────────
      Loading
@@ -343,6 +399,47 @@ export default function ProductDetail() {
 
             <div className="my-8 h-px bg-[#E8E3D9]" />
 
+            {/* Visual Variant Swatches if product has multiple variants */}
+            {product?.variants && product.variants.length > 1 && (
+              <div className="mb-6">
+                <h3 className="mb-2 text-sm font-medium text-[#17140F]">
+                  Select Variant
+                </h3>
+                <div className="flex flex-wrap gap-2.5">
+                  {product.variants.map((v, idx) => {
+                    const isSelected = selectedVariant?._id === v._id;
+                    const vImg =
+                      v.images?.[0]?.url ||
+                      (typeof v.images?.[0] === "string" ? v.images[0] : null);
+                    const vAttrs = getAttributesObject(v.attributes);
+                    const label =
+                      Object.values(vAttrs).join(" / ") || `Variant ${idx + 1}`;
+                    return (
+                      <button
+                        key={v._id || idx}
+                        type="button"
+                        onClick={() => handleSelectVariant(v)}
+                        className={`flex items-center gap-2 rounded-lg border-2 p-1.5 pr-3 text-xs font-medium transition ${
+                          isSelected
+                            ? "border-[#17140F] bg-[#17140F] text-[#FAFAF8]"
+                            : "border-[#E8E3D9] bg-white text-[#17140F] hover:border-[#17140F]"
+                        }`}
+                      >
+                        {vImg && (
+                          <img
+                            src={getImageUrl(vImg)}
+                            alt={label}
+                            className="h-8 w-8 rounded object-cover"
+                          />
+                        )}
+                        <span>{label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Variant Attribute Selector */}
             {Object.keys(attributeOptions).length > 0 && (
               <div className="mb-8 space-y-4">
@@ -357,12 +454,7 @@ export default function ProductDetail() {
                         return (
                           <button
                             key={value}
-                            onClick={() => {
-                              setSelectedAttributes((prev) => ({
-                                ...prev,
-                                [attrKey]: value,
-                              }));
-                            }}
+                            onClick={() => handleSelectAttribute(attrKey, value)}
                             className={`rounded-md border-2 px-4 py-2 text-sm font-medium transition ${
                               isSelected
                                 ? "border-[#17140F] bg-[#17140F] text-[#FAFAF8]"
@@ -433,17 +525,41 @@ export default function ProductDetail() {
             <div className="mt-9 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <button
                 type="button"
-                disabled={!selectedVariant || selectedVariant.stock === 0}
+                onClick={async () => {
+                  if (selectedVariant) {
+                    const result = await handleAddToCart(
+                      productId,
+                      selectedVariant._id,
+                      quantity
+                    );
+                    if (result.success) {
+                      navigate("/cart");
+                    }
+                  }
+                }}
+                disabled={!selectedVariant || selectedVariant.stock === 0 || cartLoading}
                 className="h-13 rounded-sm bg-[#17140F] px-6 py-4 text-sm font-medium text-[#FAFAF8] transition hover:bg-[#2B2620] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Add to cart
+                {cartLoading ? "Adding..." : "Add to cart"}
               </button>
               <button
                 type="button"
-                disabled={!selectedVariant || selectedVariant.stock === 0}
+                onClick={async () => {
+                  if (selectedVariant) {
+                    const result = await handleAddToCart(
+                      productId,
+                      selectedVariant._id,
+                      quantity
+                    );
+                    if (result.success) {
+                      navigate("/cart");
+                    }
+                  }
+                }}
+                disabled={!selectedVariant || selectedVariant.stock === 0 || cartLoading}
                 className="h-13 rounded-sm border border-[#17140F] px-6 py-4 text-sm font-medium text-[#17140F] transition hover:bg-[#17140F] hover:text-[#FAFAF8] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Buy now
+                {cartLoading ? "Processing..." : "Buy now"}
               </button>
             </div>
           </section>
