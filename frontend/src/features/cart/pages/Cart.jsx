@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useCart } from "../hook/useCart";
+import Nav from "../../../shared/Components/Nav";
 import "../styles/Cart.css";
 
 /* ─────────────────────────────────────────────
@@ -125,7 +126,11 @@ export const Cart = () => {
   }
 
   return (
+    
     <div className="cart-container">
+      <Nav/>
+      
+
       {/* Header */}
       <div className="cart-header">
         <div className="cart-header-title">

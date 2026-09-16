@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate} from "react-router";
 import { useSelector } from "react-redux";
 import { useProduct } from "../hook/useProduct";
+import Nav from "../../../shared/Components/Nav.jsx";
 
 const Home = () => {
   const products = useSelector((state) => state.product.products);
@@ -54,27 +55,22 @@ const Home = () => {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
-      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-5 py-4 shadow-sm backdrop-blur-md sm:px-10">
-        <div className="mx-auto flex max-w-6xl items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="text-2xl font-black tracking-[0.25em] text-slate-950">
-              SNITCH
-            </span>
-            <span className="h-2 w-2 rounded-full bg-yellow-500" />
-          </Link>
 
-          {!user && (
+      {/* Navbaar */}
+
+      
+      <Nav>  {!user && (
             <Link
               to="/login"
               className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-yellow-500 hover:text-slate-950"
             >
               Login
             </Link>
-          )}
-        </div>
-      </header>
+          )}</Nav>
 
-      <section className="mx-auto max-w-6xl px-5 py-7 sm:px-8">
+
+   <section className="mx-auto max-w-6xl px-5 py-7 sm:px-8">
+
         <div className="mb-7">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-yellow-600">
