@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router";
 import { useProduct } from "../hook/useProduct";
 import { useCart } from "../../cart/hook/useCart";
-import Nav from "../../../shared/Components/Nav";
 
 
 /* ─────────────────────────────────────────────
@@ -285,8 +284,6 @@ export default function ProductDetail() {
 
   return (
     <main className="min-h-screen bg-[#FAFAF8]">
-
-      <Nav/>
       <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-10">
 
         {/* Back */}

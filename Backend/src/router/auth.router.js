@@ -1,13 +1,15 @@
 import { Router } from "express";
 import passport from "passport";
 import { registerValidationUser, loginValidation } from "../validator/auth.validation.js";
-import { regiterController, loginController, googleAuthController , meController} from "../controllers/auth.controller.js";
+import { regiterController, loginController, googleAuthController, meController, logoutController } from "../controllers/auth.controller.js";
 import { authenticateUser } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
 router.post('/register', registerValidationUser, regiterController);
 router.post('/login', loginValidation, loginController);
+router.post('/logout', logoutController);
+router.get('/logout', logoutController);
 
 // Google OAuth — redirect to Google login page
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'], session: false }));

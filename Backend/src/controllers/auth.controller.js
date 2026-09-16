@@ -23,6 +23,7 @@ async function sendTokenResponse(user, res, message) {
     return res.status(201).json({
         message,
         success: true,
+        token,
         user: {
             id: user._id,
             email: user.email,
@@ -133,5 +134,21 @@ export const googleAuthController = async (req, res) => {
     } catch (error) {
         console.error("Google auth error:", error);
         return res.redirect("http://localhost:5173/register?error=google_failed");
+    }
+};
+
+export const logoutController = async (req, res) => {
+    try {
+        res.clearCookie("token", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+        });
+        return res.status(200).json({
+            success: true,
+            message: "Logged out successfully",
+        });
+    } catch (error) {
+        return res.status(500).json({ message: "Logout failed" });
     }
 };
