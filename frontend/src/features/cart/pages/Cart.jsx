@@ -237,11 +237,15 @@ export const Cart = () => {
                     {/* Details */}
                     <div className="item-details">
                       <h3 className="item-title">{item.product?.tittle}</h3>
-                      {variantAttrs && Object.keys(variantAttrs).length > 0 && (
+                      {variantAttrs && Object.keys(variantAttrs).length > 0 ? (
                         <div className="item-variant-pill">
                           {Object.entries(variantAttrs)
                             .map(([key, value]) => `${key}: ${value}`)
                             .join(" • ")}
+                        </div>
+                      ) : (
+                        <div className="item-variant-pill font-medium text-amber-800 bg-amber-50">
+                          Main Product
                         </div>
                       )}
                       <p className="item-price">

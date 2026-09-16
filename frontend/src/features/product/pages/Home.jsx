@@ -145,9 +145,16 @@ const Home = () => {
                       {product.description || "No description available."}
                     </p>
 
-                    <p className="mt-2 text-sm font-black text-slate-950">
-                      {formatPrice(product.price)}
-                    </p>
+                    <div className="mt-2 flex items-center justify-between">
+                      <p className="text-sm font-black text-slate-950">
+                        {formatPrice(product.price)}
+                      </p>
+                      {product.variants?.length > 0 && (
+                        <span className="text-[11px] font-medium text-amber-800 bg-amber-50 border border-amber-200/60 rounded px-1.5 py-0.5">
+                          {product.variants.length} variant{product.variants.length > 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </article>
               );

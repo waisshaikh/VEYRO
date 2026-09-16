@@ -17,7 +17,8 @@ router.get("/", authenticateUser, getCartController);
 // Clear entire cart (must come before /:itemId routes)
 router.delete("/", authenticateUser, clearCartController);
 
-// Add to cart
+// Add to cart (supports both main product and variant)
+router.post("/:productId", authenticateUser, validateAddToCart, cartController);
 router.post("/:productId/:variantId", authenticateUser, validateAddToCart, cartController);
 
 // Update cart item quantity
