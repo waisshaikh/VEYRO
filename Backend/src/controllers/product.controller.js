@@ -112,6 +112,7 @@ export async function addProductVarient(req, res) {
         }
 
         // Upload images to ImageKit and format as objects
+
         const images = [];
         if (req.files && req.files.length > 0) {
             const uploadedImages = await Promise.all(
@@ -122,6 +123,7 @@ export async function addProductVarient(req, res) {
                         mimeType: file.mimetype
                     });
                     // Return object with url property to match schema
+
                     return { url: imageUrl };
                 })
             );
@@ -134,6 +136,7 @@ export async function addProductVarient(req, res) {
         const attributes = JSON.parse(req.body.attributes || "{}");
 
         // Create variant object
+
         const newVariant = {
             price: {
                 amount: priceAmount,
