@@ -280,7 +280,7 @@ export default function ProductDetail() {
 
   /* ─────────────────────────────────────────────
      Main UI
-  ───────────────────────────────────────────── */
+   */
 
   return (
     <main className="min-h-screen bg-[#FAFAF8]">
