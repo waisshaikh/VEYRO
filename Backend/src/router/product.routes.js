@@ -7,8 +7,8 @@ import {
     getAllProduct,
     getProductDetail,
     addProductVarient,
+    updateVariant,
     // updateVariantStock,
-    // updateVariant,
     // deleteVariant
 } from "../controllers/product.controller.js"
 import { productValidator } from "../validator/product.validator.js";
@@ -30,7 +30,7 @@ router.get("/seller", authenticateSeller, getSellerProduct)
 // Seller variant endpoints
 router.post("/seller/product/:productId/variants", authenticateSeller, upload.array('images', 7), addProductVarient);
 // router.patch("/seller/product/:productId/variants/:variantId/stock", authenticateSeller, updateVariantStock);
-// router.put("/seller/product/:productId/variants/:variantId", authenticateSeller, upload.array('images', 7), updateVariant);
+router.put("/seller/product/:productId/variants/:variantId", authenticateSeller, upload.array('images', 7), updateVariant);
 // router.delete("/seller/product/:productId/variants/:variantId", authenticateSeller, deleteVariant);
 
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useCart } from "../hook/useCart";
 import "../styles/Cart.css";
@@ -20,6 +20,62 @@ function formatPrice(price) {
     currency: price?.currency || "INR",
     maximumFractionDigits: 0,
   }).format(Number(price?.amount || 0));
+}
+
+/**
+ * Resolves the current live price amount for a cart item.
+ * Uses the variant price if a matching variant exists, otherwise
+ * falls back to the base product price.
+ */
+function getCurrentLivePrice(item, matchedVariant) {
+  if (matchedVariant?.price?.amount != null) {
+    return matchedVariant.price.amount;
+  }
+  return item.product?.price?.amount ?? null;
+}
+
+/**
+ * Returns the price change banner element for a cart item,
+ * or null if the price hasn't changed.
+ */
+function PriceChangeBanner({ snapshotAmount, currentAmount, currency }) {
+  if (currentAmount == null || snapshotAmount == null) return null;
+
+  const diff = Math.round(currentAmount - snapshotAmount);
+  if (diff === 0) return null;
+
+  const fmt = (amt) =>
+    new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: currency || "INR",
+      maximumFractionDigits: 0,
+    }).format(amt);
+
+  if (diff > 0) {
+    // Price increased
+    return (
+      <div className="price-alert price-increased" role="alert">
+        <span className="price-alert-icon">📈</span>
+        <span className="price-alert-text">
+          Price increased by <strong>{fmt(diff)}</strong>. Current price is{" "}
+          <strong>{fmt(currentAmount)}</strong> — you'll be charged at the
+          updated price.
+        </span>
+      </div>
+    );
+  }
+
+  // Price decreased
+  const saved = Math.abs(diff);
+  return (
+    <div className="price-alert price-decreased" role="alert">
+      <span className="price-alert-icon">🎉</span>
+      <span className="price-alert-text">
+        Great news! You'll save <strong>{fmt(saved)}</strong> on this purchase.
+        Current price is <strong>{fmt(currentAmount)}</strong>.
+      </span>
+    </div>
+  );
 }
 
 function getAttributesObject(attrs) {
@@ -115,6 +171,33 @@ export const Cart = () => {
   };
 
   const totalItemCount = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+
+  /**
+   * liveTotalPrice — recalculates the order total using current live prices
+   * from the populated product/variant data returned by the backend.
+   * Falls back to the snapshot price if live price is unavailable.
+   */
+  const liveTotalPrice = useMemo(() => {
+    return items.reduce((total, item) => {
+      const vid =
+        typeof item.variant === "object"
+          ? (item.variant?._id || item.variant?.id)?.toString()
+          : item.variant?.toString();
+      const mv = item.product?.variants?.find(
+        (v) => v._id?.toString() === vid
+      );
+      const live = getCurrentLivePrice(item, mv);
+      const effectivePrice = live ?? item.price?.amount ?? 0;
+      return total + effectivePrice * (item.quantity || 1);
+    }, 0);
+  }, [items]);
+
+  // Snapshot total (what was stored when items were added)
+  const snapshotTotalPrice = items.reduce(
+    (total, item) => total + (item.price?.amount ?? 0) * (item.quantity || 1),
+    0
+  );
+  const totalSavings = Math.round(snapshotTotalPrice - liveTotalPrice);
 
   if (loading && filteredItems.length === 0) {
     return (
@@ -219,7 +302,14 @@ export const Cart = () => {
                   : null;
 
                 const currentQuantity = localQuantities[item._id] ?? item.quantity;
-                const itemSubtotal = (item.price?.amount || 0) * currentQuantity;
+
+                // Price change detection: compare snapshot price vs current live price
+                const livePrice = getCurrentLivePrice(item, matchedVariant);
+                const snapshotPrice = item.price?.amount ?? null;
+
+                // Use live price for the per-item subtotal display
+                const effectiveUnitPrice = livePrice ?? item.price?.amount ?? 0;
+                const itemSubtotal = effectiveUnitPrice * currentQuantity;
 
                 return (
                   <div key={item._id} className="cart-item">
@@ -252,6 +342,13 @@ export const Cart = () => {
                       <p className="item-price">
                         {formatPrice(item.price)} each
                       </p>
+
+                      {/* Price change alert banner */}
+                      <PriceChangeBanner
+                        snapshotAmount={snapshotPrice}
+                        currentAmount={livePrice}
+                        currency={item.price?.currency || "INR"}
+                      />
                     </div>
 
                     {/* Controls & Subtotal & Remove */}
@@ -332,9 +429,27 @@ export const Cart = () => {
               <div className="summary-row">
                 <span>Subtotal</span>
                 <span>
-                  {formatPrice({ amount: totalPrice, currency: "INR" })}
+                  {formatPrice({ amount: liveTotalPrice, currency: "INR" })}
                 </span>
               </div>
+
+              {totalSavings > 0 && (
+                <div className="summary-row summary-savings">
+                  <span>Price drop savings</span>
+                  <span className="savings-amount">
+                    − {formatPrice({ amount: totalSavings, currency: "INR" })}
+                  </span>
+                </div>
+              )}
+
+              {totalSavings < 0 && (
+                <div className="summary-row summary-increase">
+                  <span>Price adjustments</span>
+                  <span className="increase-amount">
+                    + {formatPrice({ amount: Math.abs(totalSavings), currency: "INR" })}
+                  </span>
+                </div>
+              )}
 
               <div className="summary-row">
                 <span>Estimated Shipping</span>
@@ -344,7 +459,7 @@ export const Cart = () => {
               <div className="summary-row total">
                 <span>Total</span>
                 <span>
-                  {formatPrice({ amount: totalPrice, currency: "INR" })}
+                  {formatPrice({ amount: liveTotalPrice, currency: "INR" })}
                 </span>
               </div>
 

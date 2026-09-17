@@ -281,93 +281,93 @@ export async function addProductVarient(req, res) {
 //     }
 // }
 
-// export async function updateVariant(req, res) {
-//     try {
-//         const { productId, variantId } = req.params;
-//         const { priceAmount, priceCurrency, stock, attributes, existingImages, images } = req.body;
-//         const sellerId = req.user?._id;
+export async function updateVariant(req, res) {
+    try {
+        const { productId, variantId } = req.params;
+        const { priceAmount, priceCurrency, stock, attributes, existingImages, images } = req.body;
+        const sellerId = req.user?._id;
 
-//         const product = await productModel.findOne({ _id: productId, seller: sellerId });
-//         if (!product) {
-//             return res.status(404).json({ success: false, message: "Product not found or unauthorized" });
-//         }
+        const product = await productModel.findOne({ _id: productId, seller: sellerId });
+        if (!product) {
+            return res.status(404).json({ success: false, message: "Product not found or unauthorized" });
+        }
 
-//         const variant = product.variants.id(variantId);
-//         if (!variant) {
-//             return res.status(404).json({ success: false, message: "Variant not found" });
-//         }
+        const variant = product.variants.id(variantId);
+        if (!variant) {
+            return res.status(404).json({ success: false, message: "Variant not found" });
+        }
 
-//         if (priceAmount !== undefined) {
-//             variant.price.amount = Number(priceAmount);
-//         }
-//         if (priceCurrency) {
-//             variant.price.currency = priceCurrency;
-//         }
-//         if (stock !== undefined) {
-//             variant.stock = Math.max(0, Number(stock));
-//         }
-//         if (attributes !== undefined) {
-//             let parsedAttributes = attributes;
-//             if (typeof attributes === "string") {
-//                 try {
-//                     parsedAttributes = JSON.parse(attributes);
-//                 } catch (e) {
-//                     parsedAttributes = {};
-//                 }
-//             }
-//             variant.attributes = parsedAttributes;
-//         }
+        if (priceAmount !== undefined) {
+            variant.price.amount = Number(priceAmount);
+        }
+        if (priceCurrency) {
+            variant.price.currency = priceCurrency;
+        }
+        if (stock !== undefined) {
+            variant.stock = Math.max(0, Number(stock));
+        }
+        if (attributes !== undefined) {
+            let parsedAttributes = attributes;
+            if (typeof attributes === "string") {
+                try {
+                    parsedAttributes = JSON.parse(attributes);
+                } catch (e) {
+                    parsedAttributes = {};
+                }
+            }
+            variant.attributes = parsedAttributes;
+        }
 
-//         // Upload any newly provided image files
-//         let uploadedImages = [];
-//         if (req.files && req.files.length > 0) {
-//             uploadedImages = await Promise.all(
-//                 req.files.map(async (file) => {
-//                     const url = await uploadFile({
-//                         buffer: file.buffer,
-//                         fileName: file.originalname,
-//                         mimeType: file.mimetype
-//                     });
-//                     return { url };
-//                 })
-//             );
-//         }
+        // Upload any newly provided image files
+        let uploadedImages = [];
+        if (req.files && req.files.length > 0) {
+            uploadedImages = await Promise.all(
+                req.files.map(async (file) => {
+                    const url = await uploadFile({
+                        buffer: file.buffer,
+                        fileName: file.originalname,
+                        mimeType: file.mimetype
+                    });
+                    return { url };
+                })
+            );
+        }
 
-//         const rawExisting = existingImages !== undefined ? existingImages : images;
-//         if (rawExisting !== undefined || uploadedImages.length > 0) {
-//             let existingList = [];
-//             if (rawExisting) {
-//                 try {
-//                     const parsed = typeof rawExisting === "string" ? JSON.parse(rawExisting) : rawExisting;
-//                     if (Array.isArray(parsed)) {
-//                         existingList = parsed
-//                             .map((img) => (typeof img === "string" ? { url: img } : img))
-//                             .filter((img) => img && img.url);
-//                     } else if (typeof parsed === "object" && parsed?.url) {
-//                         existingList = [parsed];
-//                     }
-//                 } catch (e) {
-//                     if (typeof rawExisting === "string" && rawExisting.trim().startsWith("http")) {
-//                         existingList = [{ url: rawExisting.trim() }];
-//                     }
-//                 }
-//             }
-//             variant.images = [...existingList, ...uploadedImages].slice(0, 7);
-//         }
+        const rawExisting = existingImages !== undefined ? existingImages : images;
+        if (rawExisting !== undefined || uploadedImages.length > 0) {
+            let existingList = [];
+            if (rawExisting) {
+                try {
+                    const parsed = typeof rawExisting === "string" ? JSON.parse(rawExisting) : rawExisting;
+                    if (Array.isArray(parsed)) {
+                        existingList = parsed
+                            .map((img) => (typeof img === "string" ? { url: img } : img))
+                            .filter((img) => img && img.url);
+                    } else if (typeof parsed === "object" && parsed?.url) {
+                        existingList = [parsed];
+                    }
+                } catch (e) {
+                    if (typeof rawExisting === "string" && rawExisting.trim().startsWith("http")) {
+                        existingList = [{ url: rawExisting.trim() }];
+                    }
+                }
+            }
+            variant.images = [...existingList, ...uploadedImages].slice(0, 7);
+        }
 
-//         await product.save();
+        await product.save();
 
-//         res.status(200).json({
-//             success: true,
-//             message: "Variant updated successfully",
-//             variant,
-//             product
-//         });
-//     } catch (error) {
-//         console.error("Update variant error:", error);
-//         res.status(500).json({ success: false, message: "Failed to update variant", error: error.message });
-//     }
-// }
+        res.status(200).json({
+            success: true,
+            message: "Variant updated successfully",
+            variant,
+            product
+        });
+    } catch (error) {
+        console.error("Update variant error:", error);
+        res.status(500).json({ success: false, message: "Failed to update variant", error: error.message });
+    }
+}
 
 // export async function deleteVariant(req, res) {
 //     try {

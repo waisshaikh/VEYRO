@@ -41,8 +41,8 @@ export async function addProductVarient(productId, formData) {
     return response.data
 }
 
-export async function updateVariantStockApi(prsoductId, variantId, stock) {
-    const response = await productApiInstance.patch(`/seller/prod uct/${productId}/variants/${variantId}/stock`, { stock });
+export async function updateVariantStockApi(productId, variantId, stock) {
+    const response = await productApiInstance.patch(`/seller/product/${productId}/variants/${variantId}/stock`, { stock });
     return response.data;
 }
 
