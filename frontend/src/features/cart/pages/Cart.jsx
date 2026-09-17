@@ -311,6 +311,13 @@ export const Cart = () => {
                 const effectiveUnitPrice = livePrice ?? item.price?.amount ?? 0;
                 const itemSubtotal = effectiveUnitPrice * currentQuantity;
 
+                // Snapshot subtotal (old price × qty) for the card breakdown
+                const snapshotUnitPrice = item.price?.amount ?? 0;
+                const snapshotSubtotal = snapshotUnitPrice * currentQuantity;
+                const itemDelta = Math.round(itemSubtotal - snapshotSubtotal);
+                const priceChanged = snapshotPrice != null && livePrice != null && itemDelta !== 0;
+                const currency = item.price?.currency || "INR";
+
                 return (
                   <div key={item._id} className="cart-item">
                     {/* Image */}
@@ -340,7 +347,22 @@ export const Cart = () => {
                         </div>
                       )}
                       <p className="item-price">
-                        {formatPrice(item.price)} each
+                        {/* Always show live price as primary */}
+                        <span className="item-price-current">
+                          {formatPrice({
+                            amount: effectiveUnitPrice,
+                            currency: item.price?.currency || "INR",
+                          })}{" "}
+                          each
+                        </span>
+                        {/* Strike through old snapshot price if it changed */}
+                        {snapshotPrice != null &&
+                          livePrice != null &&
+                          Math.round(livePrice) !== Math.round(snapshotPrice) && (
+                            <span className="item-price-snapshot">
+                              {formatPrice(item.price)}
+                            </span>
+                          )}
                       </p>
 
                       {/* Price change alert banner */}
@@ -396,12 +418,31 @@ export const Cart = () => {
 
                       <div className="item-subtotal">
                         <span className="subtotal-label">Subtotal: </span>
-                        <p className="subtotal">
-                          {formatPrice({
-                            amount: itemSubtotal,
-                            currency: item.price?.currency || "INR",
-                          })}
-                        </p>
+
+                        {priceChanged ? (
+                          // Price changed — show full breakdown
+                          <div className="subtotal-breakdown">
+                            {/* Old subtotal, struckthrough */}
+                            <p className="subtotal-old">
+                              {formatPrice({ amount: snapshotSubtotal, currency })}
+                            </p>
+                            {/* Delta: green discount or red surcharge */}
+                            <p className={itemDelta < 0 ? "subtotal-delta discount" : "subtotal-delta surcharge"}>
+                              {itemDelta < 0
+                                ? `− ${formatPrice({ amount: Math.abs(itemDelta), currency })}`
+                                : `+ ${formatPrice({ amount: itemDelta, currency })}`}
+                            </p>
+                            {/* Final live subtotal */}
+                            <p className="subtotal subtotal-final">
+                              {formatPrice({ amount: itemSubtotal, currency })}
+                            </p>
+                          </div>
+                        ) : (
+                          // Price unchanged — normal single subtotal
+                          <p className="subtotal">
+                            {formatPrice({ amount: itemSubtotal, currency })}
+                          </p>
+                        )}
                       </div>
 
                       <button
@@ -426,13 +467,15 @@ export const Cart = () => {
             <div className="summary-box">
               <h2 className="summary-title">Order Summary</h2>
 
+              {/* Subtotal = original snapshot prices (what was stored when items were added) */}
               <div className="summary-row">
                 <span>Subtotal</span>
                 <span>
-                  {formatPrice({ amount: liveTotalPrice, currency: "INR" })}
+                  {formatPrice({ amount: snapshotTotalPrice, currency: "INR" })}
                 </span>
               </div>
 
+              {/* Price dropped: show savings (snapshot - live = positive) */}
               {totalSavings > 0 && (
                 <div className="summary-row summary-savings">
                   <span>Price drop savings</span>
@@ -442,6 +485,7 @@ export const Cart = () => {
                 </div>
               )}
 
+              {/* Price increased: show adjustment (snapshot - live = negative) */}
               {totalSavings < 0 && (
                 <div className="summary-row summary-increase">
                   <span>Price adjustments</span>
@@ -456,6 +500,7 @@ export const Cart = () => {
                 <span className="free-shipping-tag">Calculated at checkout</span>
               </div>
 
+              {/* Total = live price (what the customer actually pays) */}
               <div className="summary-row total">
                 <span>Total</span>
                 <span>

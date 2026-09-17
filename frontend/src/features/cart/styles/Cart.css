@@ -286,6 +286,24 @@
   font-weight: 500;
   color: #8a8175;
   margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Live (current) unit price — shown as the primary "each" label */
+.item-price-current {
+  color: #17140f;
+  font-weight: 600;
+}
+
+/* Old snapshot price when the price has changed — struck through */
+.item-price-snapshot {
+  font-size: 12px;
+  color: #a39c8e;
+  text-decoration: line-through;
+  font-weight: 400;
 }
 
 /* Item Controls & Right Side */
@@ -366,7 +384,7 @@
 
 /* Subtotal */
 .item-subtotal {
-  min-width: 90px;
+  min-width: 100px;
   text-align: right;
 }
 
@@ -377,7 +395,55 @@
   text-transform: uppercase;
 }
 
+/* Normal (no price change) */
 .subtotal {
+  font-size: 16px;
+  font-weight: 700;
+  color: #17140f;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+/* Price-changed breakdown container */
+.subtotal-breakdown {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+/* Old snapshot subtotal — struckthrough */
+.subtotal-old {
+  font-size: 13px;
+  font-weight: 500;
+  color: #a39c8e;
+  text-decoration: line-through;
+  margin: 0;
+}
+
+/* Delta line */
+.subtotal-delta {
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* Price decreased — green discount */
+.subtotal-delta.discount {
+  color: #15803d;
+  background-color: #f0fdf4;
+}
+
+/* Price increased — amber surcharge */
+.subtotal-delta.surcharge {
+  color: #c2410c;
+  background-color: #fff7ed;
+}
+
+/* Final live subtotal — bold */
+.subtotal-final {
   font-size: 16px;
   font-weight: 700;
   color: #17140f;
