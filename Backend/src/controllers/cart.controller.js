@@ -129,65 +129,17 @@ export const cartController = async (req, res) => {
 }
 
 export const getCartController = async (req, res) => {
+    const user = req.user
 
-    // Aggregation pipeline
     try {
-        const cart = await cartModel.aggregatedb.getCollection('carts').aggregate
-  [
-    { $unwind: { path: '$items' } },
-    {
-      $lookup: {
-        from: 'products',
-        localField: 'items.product',
-        foreignField: '_id',
-        as: 'items.product'
-      }
-    },
-    { $unwind: { path: '$items.product' } },
-    {
-      $unwind: { path: '$items.product.variants' }
-    },
-    {
-      $match: {
-        $expr: {
-          $eq: [
-            '$items.variant',
-            '$items.product.variants._id'
-          ]
-        }
-      }
-    },
-    {
-      $addFields: {
-        itemPrice: {
-          price: {
-            $multiply: [
-              '$items.quantity',
-              '$items.product.variants.price.amount'
-            ]
-          },
-          currency:
-            '$items.product.variants.price.currency'
-        }
-      }
-    },
-    {
-      $group: {
-        _id: '$_id',
-        totalPrice: { $sum: '$itemPrice.price' },
-        currency: {
-          $first: '$itemPrice.currency'
-        },
-        items: { $push: '$items' }
-      }
-    }
-  ]
+        // Simple approach: find cart and populate items.product with variants
+        let cart = await cartModel.findOne({ user: user._id }).populate({
+            path: 'items.product',
+            populate: {
+                path: 'variants'
+            }
+        });
 
-//   Aggregation pipeline end
-
-
-
-        
         if (!cart) {
             return res.status(200).json({
                 message: "Cart is empty",
@@ -199,6 +151,7 @@ export const getCartController = async (req, res) => {
         return res.status(200).json({
             message: "Cart fetched successfully",
             success: true,
+            cart: cart,
             items: cart.items || []
         })
     } catch (error) {

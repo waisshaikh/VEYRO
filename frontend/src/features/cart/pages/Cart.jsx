@@ -183,7 +183,8 @@ export const Cart = () => {
         typeof item.variant === "object"
           ? (item.variant?._id || item.variant?.id)?.toString()
           : item.variant?.toString();
-      const mv = item.product?.variants?.find(
+      const variantsArray = Array.isArray(item.product?.variants) ? item.product.variants : [];
+      const mv = variantsArray.find(
         (v) => v._id?.toString() === vid
       );
       const live = getCurrentLivePrice(item, mv);
@@ -281,7 +282,8 @@ export const Cart = () => {
                     ? (item.variant?._id || item.variant?.id)?.toString()
                     : item.variant?.toString();
 
-                const matchedVariant = item.product?.variants?.find(
+                const variantsArray = Array.isArray(item.product?.variants) ? item.product.variants : [];
+                const matchedVariant = variantsArray.find(
                   (v) => v._id?.toString() === variantId
                 );
 
