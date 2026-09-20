@@ -129,8 +129,64 @@ export const cartController = async (req, res) => {
 }
 
 export const getCartController = async (req, res) => {
+
+    // Aggregation pipeline
     try {
-        const cart = await cartModel.findOne({ user: req.user._id }).populate('items.product')
+        const cart = await cartModel.aggregatedb.getCollection('carts').aggregate
+  [
+    { $unwind: { path: '$items' } },
+    {
+      $lookup: {
+        from: 'products',
+        localField: 'items.product',
+        foreignField: '_id',
+        as: 'items.product'
+      }
+    },
+    { $unwind: { path: '$items.product' } },
+    {
+      $unwind: { path: '$items.product.variants' }
+    },
+    {
+      $match: {
+        $expr: {
+          $eq: [
+            '$items.variant',
+            '$items.product.variants._id'
+          ]
+        }
+      }
+    },
+    {
+      $addFields: {
+        itemPrice: {
+          price: {
+            $multiply: [
+              '$items.quantity',
+              '$items.product.variants.price.amount'
+            ]
+          },
+          currency:
+            '$items.product.variants.price.currency'
+        }
+      }
+    },
+    {
+      $group: {
+        _id: '$_id',
+        totalPrice: { $sum: '$itemPrice.price' },
+        currency: {
+          $first: '$itemPrice.currency'
+        },
+        items: { $push: '$items' }
+      }
+    }
+  ]
+
+//   Aggregation pipeline end
+
+
+
         
         if (!cart) {
             return res.status(200).json({
