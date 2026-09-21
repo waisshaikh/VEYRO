@@ -1,6 +1,7 @@
 import cartModel from "../models/cart.model.js"
 import productModel from "../models/product.model.js"
 import { stockOfVariant } from "../dao/product.dao.js"
+import { createOrder } from "../services/payment.service.js" 
 
 export const cartController = async (req, res) => {
     try {
@@ -278,4 +279,17 @@ export const clearCartController = async (req, res) => {
             error: error.message
         })
     }
+}
+
+
+export const createOrderController = async(req,res) =>{
+    const order = await createOrder({amount:100, currency:"INR"})
+
+    return res.status(200).json({
+        message:"order Created Successfully",
+        success:true,
+        order
+    })
+
+    
 }

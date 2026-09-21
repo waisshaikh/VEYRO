@@ -2,8 +2,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useCart } from "../hook/useCart";
 import "../styles/Cart.css";
+import { useRazorpay } from "react-razorpay";
+import { useSelector } from "react-redux";
 
-/* ─────────────────────────────────────────────
+
+/* ───────────────────────────────────────────── 
    Helpers
 ───────────────────────────────────────────── */
 
@@ -95,6 +98,7 @@ function getAttributesObject(attrs) {
 
 export const Cart = () => {
   const {
+   
     items,
     filteredItems,
     loading,
@@ -107,8 +111,14 @@ export const Cart = () => {
     handleRemoveFromCart,
     handleClearCart,
     handleSearchCart,
+    handleCreateCardOrder,
     resetMessages,
   } = useCart();
+   
+
+  const user = useSelector(state=>state.user)
+
+ const {isLoading, Razorpay } = useRazorpay();
 
   const [localQuantities, setLocalQuantities] = useState({});
 
@@ -133,6 +143,48 @@ export const Cart = () => {
       return () => clearTimeout(timer);
     }
   }, [successMessage, error]);
+  
+
+async function  handleCheckOut(){
+  const order = await handleCreateCardOrder()
+  console.log(order);
+
+
+  const options = {
+      key: "rzp_test_TeZEEYeRAWLZGl",
+      amount: order.amount, // Amount in paise
+      currency: order.currency,
+      name: "Snitch",
+      description: "Test Transaction",
+      order_id: order.id, // Generate order_id on server
+      handler: (response) => {
+        console.log(response);
+        alert("Payment Successful!");
+      },
+
+      prefill: {
+        name:  user?.fullname,
+        email: user?.email,
+        contact: user?.contact,
+      },
+      
+         method: {
+    upi: true,
+    card: true,
+    netbanking: true,
+    wallet: true,
+      },
+
+      theme: {
+        color: "#00C6FF",
+      },
+    };
+
+    const razorpayInstance = new Razorpay(options);
+    razorpayInstance.open();
+  
+
+  }
 
   const handleQuantityStep = (itemId, currentQuantity, delta) => {
     const next = currentQuantity + delta;
@@ -510,9 +562,12 @@ export const Cart = () => {
                 </span>
               </div>
 
-              <button type="button" className="btn-checkout">
+              <button type="button" className="btn-checkout" onClick={handleCheckOut}>
                 Proceed to Checkout
               </button>
+
+
+              
 
               <div className="security-note">
                 <span>🔒</span>

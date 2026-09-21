@@ -17,6 +17,7 @@ import {
   getCart,
   updateCartItemQuantity,
   removeFromCart,
+  createCartOrder,
   clearCart as clearCartApi
 } from "../services/cart.api.js";
 
@@ -147,6 +148,12 @@ export const useCart = () => {
     }
   }
 
+  async function handleCreateCardOrder( ) {
+    const data = await createCartOrder()
+    return data.order
+    
+  }
+
   // Search items in cart
   function handleSearchCart(query) {
     dispatch(setSearchQuery(query));
@@ -165,6 +172,9 @@ export const useCart = () => {
     dispatch(clearError());
   };
 
+
+
+
   return {
     items,
     filteredItems,
@@ -179,6 +189,7 @@ export const useCart = () => {
     handleRemoveFromCart,
     handleClearCart,
     handleSearchCart,
+    handleCreateCardOrder,
     resetMessages
   };
 };

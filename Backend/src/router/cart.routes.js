@@ -5,8 +5,11 @@ import {
     getCartController, 
     updateCartItemController, 
     removeCartItemController, 
-    clearCartController 
+    clearCartController,
+    createOrderController
 } from "../controllers/cart.controller.js"
+
+
 import { validateAddToCart } from "../validator/Cart.validator.js"
 
 const router = express.Router();
@@ -26,5 +29,8 @@ router.patch("/:itemId", authenticateUser, updateCartItemController);
 
 // Remove cart item
 router.delete("/:itemId", authenticateUser, removeCartItemController);
+
+
+router.post("/payment/create/order",authenticateUser,createOrderController)
 
 export default router
