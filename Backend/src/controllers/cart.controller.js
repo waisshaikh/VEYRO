@@ -133,15 +133,33 @@ export const getCartController = async (req, res) => {
     const user = req.user
 
     try {
-        // Simple approach: find cart and populate items.product with variants
-        let cart = await cartModel.findOne({ user: user._id }).populate({
-            path: 'items.product',
-            populate: {
-                path: 'variants'
+        // Aggregation pipeline
+        const cart = await cartModel.aggregate([
+            { $match: { user: user._id } },
+            { $unwind: { path: '$items', preserveNullAndEmptyArrays: true } },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: 'items.product',
+                    foreignField: '_id',
+                    as: 'items.product'
+                }
+            },
+            { $unwind: { path: '$items.product', preserveNullAndEmptyArrays: true } },
+            {
+                $group: {
+                    _id: '$_id',
+                    user: { $first: '$user' },
+                    createdAt: { $first: '$createdAt' },
+                    updatedAt: { $first: '$updatedAt' },
+                    items: { $push: '$items' }
+                }
             }
-        });
+        ])
 
-        if (!cart) {
+        const result = cart.length > 0 ? cart[0] : null
+
+        if (!result || !result.items || result.items.length === 0) {
             return res.status(200).json({
                 message: "Cart is empty",
                 success: true,
@@ -149,11 +167,19 @@ export const getCartController = async (req, res) => {
             })
         }
 
+        // Populate variants for each product in the items
+        for (let item of result.items) {
+            if (item.product && item.product._id) {
+                const productWithVariants = await productModel.findById(item.product._id).populate('variants')
+                item.product = productWithVariants
+            }
+        }
+
         return res.status(200).json({
             message: "Cart fetched successfully",
             success: true,
-            cart: cart,
-            items: cart.items || []
+            cart: result,
+            items: result.items || []
         })
     } catch (error) {
         console.error("Error in getCartController:", error)
