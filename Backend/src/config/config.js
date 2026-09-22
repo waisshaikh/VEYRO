@@ -14,7 +14,7 @@ if (!process.env.GOOGLE_CLIENT_ID) {
 }
 
 if (!process.env.GOOGLE_CLIENT_SECRET) {
-    throw new Error("GOOGLE_CLIENT_ID is not defined in environment variables");
+    throw new Error("GOOGLE_CLIENT_SECRET is not defined in environment variables");
 }
 
 if (!process.env.IMAGEKIT_PRIVATE_KEY) {
@@ -38,7 +38,9 @@ export const config = {
     IMAGEKIT_PUBLIC_KEY: process.env.IMAGEKIT_PUBLIC_KEY,
     IMAGEKIT_URL_ENDPOINT: process.env.IMAGEKIT_URL_ENDPOINT, 
     RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
-    RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET
+    RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID
 
 };
 
