@@ -9,6 +9,8 @@ import Protected from "../features/auth/components/Protected.jsx";
 import ProductDetail from "../features/product/pages/ProductDetail.jsx";
 import SellerProductDetail from "../features/product/pages/SellerProductDetail.jsx";
 import Cart from "../features/cart/pages/Cart.jsx";
+import OrderSuccess from "../features/cart/pages/OrderSuccess.jsx";
+import Orders from "../features/cart/pages/Orders.jsx";
 
 export const router = createBrowserRouter([
   {
@@ -23,6 +25,22 @@ export const router = createBrowserRouter([
         element: (
           <Protected>
             <Cart />
+          </Protected>
+        ),
+      },
+      {
+        path: "/order-success",
+        element: (
+          <Protected>
+            <OrderSuccess />
+          </Protected>
+        ),
+      },
+      {
+        path: "/orders",
+        element: (
+          <Protected>
+            <Orders />
           </Protected>
         ),
       },

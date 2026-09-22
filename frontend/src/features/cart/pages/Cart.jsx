@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useCart } from "../hook/useCart";
 import "../styles/Cart.css";
 import { useRazorpay } from "react-razorpay";
@@ -117,6 +117,7 @@ export const Cart = () => {
    
 
   const user = useSelector(state=>state.user)
+  const navigate = useNavigate();
 
  const {isLoading, Razorpay } = useRazorpay();
 
@@ -177,7 +178,8 @@ async function handleCheckOut(){
     return;
   }
 
-  // STEP 2: Open Razorpay popup
+  //  Open Razorpay popup
+  
   const options = {
       key: "rzp_test_TeZEEYeRAWLZGl",
       amount: order.amount,
@@ -242,7 +244,8 @@ async function handleCheckOut(){
 
       if (data.success) {
         if (status === "paid") {
-          alert("Payment successful!");
+          // Navigate to order success page with order_id
+          navigate('/order-success', { state: { orderId: orderId } });
         } else {
           alert("Payment was not completed. You can try again.");
         }

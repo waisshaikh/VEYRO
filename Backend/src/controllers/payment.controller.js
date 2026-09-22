@@ -192,7 +192,36 @@ export const getPaymentByIdController = async (req, res) => {
             error: error.message
         })
     }
-}
+};
+
+// Get payment by Razorpay orderId
+export const getPaymentByOrderIdController = async (req, res) => {
+    try {
+        const orderId = req.params.orderId;
+        const payment = await paymentModel.findOne({ 'razorpay.orderId': orderId }).populate('user');
+
+        if (!payment) {
+            return res.status(404).json({
+                message: "Payment not found for this order ID",
+                success: false
+            });
+        }
+
+        return res.status(200).json({
+            message: "Payment fetched successfully",
+            success: true,
+            payment
+        });
+
+    } catch (error) {
+        console.error("Error in getPaymentByOrderIdController:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            error: error.message
+        });
+    }
+};
 
 export const getUserPaymentsController = async (req, res) => {
     try {

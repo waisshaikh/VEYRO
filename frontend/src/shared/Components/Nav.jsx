@@ -193,6 +193,12 @@ const Nav = () => {
                         </span>
                       )}
                     </Link>
+                    <Link
+                      to="/orders"
+                      className="block px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                    >
+                      My Orders
+                    </Link>
 
                     {isSeller && (
                       <>
@@ -299,6 +305,12 @@ const Nav = () => {
                   {cartCount}
                 </span>
               )}
+            </Link>
+            <Link
+              to="/orders"
+              className="py-2 text-sm font-medium text-slate-700"
+            >
+              My Orders
             </Link>
 
             {isSeller && (
