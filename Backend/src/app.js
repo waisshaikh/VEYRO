@@ -15,8 +15,23 @@ import { googleAuthController } from "./controllers/auth.controller.js";
 const app = express();
 
 // CORS must be first
+const allowedOrigins = [
+  config.FRONTEND_ORIGIN,
+  config.BACKEND_ORIGIN,
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
+
 app.use(cors({
-  origin: [config.FRONTEND_ORIGIN, config.BACKEND_ORIGIN, "http://localhost:5173"],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    // Allow any Vercel preview deployment for this project
+    if (origin.endsWith(".vercel.app") || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS: Origin ${origin} not allowed`));
+  },
   credentials: true,
 }));
 
