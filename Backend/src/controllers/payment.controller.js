@@ -2,6 +2,8 @@ import paymentModel from "../models/payment.model.js"
 import cartModel from "../models/cart.model.js"
 import productModel from "../models/product.model.js"
 import { getCartDetails } from "../dao/cartDetail.dao.js"
+import crypto from "crypto"
+import { config } from "../config/config.js"
 
 // Create pending payment when user clicks checkout
 export const createPendingPaymentController = async (req, res) => {
@@ -109,6 +111,27 @@ export const verifyPaymentController = async (req, res) => {
         }
 
         console.log('Found pending payment:', existingPayment._id);
+
+        //  VERIFY RAZORPAY SIGNATURE - Security check
+        if (razorpay_payment_id && razorpay_signature) {
+            const expectedSignature = crypto
+                .createHmac('sha256', config.RAZORPAY_KEY_SECRET)
+                .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+                .digest('hex');
+
+            console.log('Verifying Razorpay signature...');
+            console.log('Expected:', expectedSignature);
+            console.log('Received:', razorpay_signature);
+
+            if (expectedSignature !== razorpay_signature) {
+                console.error('Invalid Razorpay signature - possible fraud attempt!');
+                return res.status(400).json({
+                    message: "Invalid payment signature - verification failed",
+                    success: false
+                });
+            }
+            console.log(' Razorpay signature verified successfully');
+        }
 
         // Update the existing payment
         existingPayment.razorpay.paymentId = razorpay_payment_id || existingPayment.razorpay.paymentId;
