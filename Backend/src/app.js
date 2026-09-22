@@ -16,7 +16,7 @@ const app = express();
 
 // CORS must be first
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: [config.FRONTEND_ORIGIN, config.BACKEND_ORIGIN, "http://localhost:5173"],
   credentials: true,
 }));
 
@@ -32,7 +32,7 @@ passport.use(
     {
       clientID: config.Client_ID,
       clientSecret: config.Client_secret,
-      callbackURL: "http://localhost:5000/auth/google/callback",
+      callbackURL: `${config.BACKEND_ORIGIN}/auth/google/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -80,7 +80,7 @@ app.get("/auth/google",
 app.get("/auth/google/callback",
   passport.authenticate("google", {
     session: false,
-    failureRedirect: "http://localhost:5173/register?error=google_failed",
+    failureRedirect: `${config.FRONTEND_ORIGIN}/register?error=google_failed`,
   }),
   googleAuthController
 );

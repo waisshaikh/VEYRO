@@ -3,6 +3,7 @@ import { useLocation, useNavigate, Link } from "react-router";
 import { useSelector } from "react-redux";
 import axios from "axios";
 import "../styles/Cart.css";
+import { API_BASE_URL } from "../../../config/api";
 
 const OrderSuccess = () => {
   const location = useLocation();
@@ -25,7 +26,7 @@ const OrderSuccess = () => {
     // Fetch payment details using orderId
     const fetchPaymentDetails = async () => {
       try {
-        const response = await axios.get(`/api/payment/order/${orderId}`, {
+        const response = await axios.get(`${API_BASE_URL}/payment/order/${orderId}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },

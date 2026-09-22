@@ -4,6 +4,7 @@ import { useCart } from "../hook/useCart";
 import "../styles/Cart.css";
 import { useRazorpay } from "react-razorpay";
 import { useSelector } from "react-redux";
+import { API_BASE_URL } from "../../../config/api";
 
 
 /* ───────────────────────────────────────────── 
@@ -153,7 +154,7 @@ async function handleCheckOut(){
   // STEP 1: Create pending payment in database
   let pendingPayment;
   try {
-    const pendingResponse = await fetch('/api/payment/create', {
+    const pendingResponse = await fetch(`${API_BASE_URL}/payment/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -225,7 +226,7 @@ async function handleCheckOut(){
   // Helper function to update payment status
   async function updatePaymentStatus(orderId, response, status) {
     try {
-      const backendResponse = await fetch('/api/payment/verify', {
+      const backendResponse = await fetch(`${API_BASE_URL}/payment/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

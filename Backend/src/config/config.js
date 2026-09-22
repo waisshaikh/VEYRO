@@ -40,7 +40,10 @@ export const config = {
     RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
     RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+    FRONTEND_ORIGIN:process.env.FRONTEND_ORIGIN,
+    BACKEND_ORIGIN:process.env.BACKEND_ORIGIN,
+
 
 };
 

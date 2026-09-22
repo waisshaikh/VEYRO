@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import axios from "axios";
 import { Link } from "react-router";
 import "../styles/Cart.css";
+import { API_BASE_URL } from "../../../config/api";
 
 const Orders = () => {
   const user = useSelector((state) => state.user);
@@ -13,7 +14,7 @@ const Orders = () => {
   useEffect(() => {
     const fetchPayments = async () => {
       try {
-        const response = await axios.get("/api/payment", {
+        const response = await axios.get(`${API_BASE_URL}/payment`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
