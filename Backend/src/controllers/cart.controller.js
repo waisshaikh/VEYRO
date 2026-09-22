@@ -297,7 +297,7 @@ export const clearCartController = async (req, res) => {
 export const createOrderController = async(req,res) =>{
 
     const cart = await getCartDetails(req.user._id)
-
+    
     const cartData = cart.length > 0 ? cart[0] : null
     
     if(!cartData || !cartData.items || cartData.items.length === 0){

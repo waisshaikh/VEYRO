@@ -1,53 +1,35 @@
 import cartModel from "../models/cart.model.js"
 import mongoose from "mongoose"
+import productModel from "../models/product.model.js"
 
 export  async function getCartDetails(userId) {
+    // Find cart and populate product for each item
+    const cart = await cartModel.findOne({ user: userId })
+        .populate({
+            path: 'items.product',
+            populate: { path: 'variants' }
+        });
 
-    // Aggregation pipeline
-        const cart = await cartModel.aggregate([
-            { $match: { user: userId} },
-            { $unwind: { path: '$items', preserveNullAndEmptyArrays: true } },
-            {
-                $lookup: {
-                    from: 'products',
-                    localField: 'items.product',
-                    foreignField: '_id',
-                    as: 'items.product'
-                }
-            },
-            { $unwind: { path: '$items.product', preserveNullAndEmptyArrays: true } },
-            {
-                $group: {
-                    _id: '$_id',
-                    user: { $first: '$user' },
-                    createdAt: { $first: '$createdAt' },
-                    updatedAt: { $first: '$updatedAt' },
-                    items: { 
-                        $push: { 
-                            $cond: [
-                                { $ifNull: ['$items', false] },
-                                '$items',
-                                '$$REMOVE'
-                            ]
-                        }
-                    },
-                    totalPrice: { 
-                        $sum: { 
-                            $multiply: [
-                                { $ifNull: ['$items.quantity', 0] },
-                                { $ifNull: ['$items.price.amount', 0] }
-                            ]
-                        }
-                    },
-                    currency: { 
-                        $first: { 
-                            $ifNull: ['$items.price.currency', 'INR'] 
-                        } 
-                    }
-                }
-            }
-        ])
+    if (!cart) {
+        return [];
+    }
 
-        return cart
-    
+    // Calculate total price and currency
+    const totalPrice = cart.items.reduce((sum, item) => {
+        return sum + (item.price?.amount || 0) * (item.quantity || 1);
+    }, 0);
+
+    const currency = cart.items[0]?.price?.currency || "INR";
+
+    // Return in same format as before for compatibility
+    return [{
+        _id: cart._id,
+        user: cart.user,
+        createdAt: cart.createdAt,
+        updatedAt: cart.updatedAt,
+        items: cart.items,
+        totalPrice: totalPrice,
+        currency: currency
+    }];
+
 }

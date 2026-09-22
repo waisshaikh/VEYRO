@@ -5,6 +5,15 @@ const cartApiInstance = axios.create({
   withCredentials: true
 });
 
+// Add Authorization header to all requests
+cartApiInstance.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 export async function addToCart(productId, variantId, quantity = 1) {
   const endpoint = variantId && variantId !== "main"
     ? `/${productId}/${variantId}`

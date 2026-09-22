@@ -111,7 +111,7 @@ export const Cart = () => {
     handleRemoveFromCart,
     handleClearCart,
     handleSearchCart,
-    handleCreateCartOrder,
+    handleCreateCardOrder,
     resetMessages,
   } = useCart();
    
@@ -145,41 +145,70 @@ export const Cart = () => {
   }, [successMessage, error]);
   
 
-async function  handleCheckOut(){
-  const result = await handleCreateCartOrder()
-  
-  if (!result.success) {
-    console.error("Failed to create order:", result.error);
+async function handleCheckOut(){
+  const order = await handleCreateCardOrder()
+  console.log("Razorpay order:", order);
+
+  // STEP 1: Create pending payment in database
+  let pendingPayment;
+  try {
+    const pendingResponse = await fetch('/api/payment/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency
+      })
+    });
+
+    pendingPayment = await pendingResponse.json();
+    if (!pendingPayment.success) {
+      alert("Error creating payment: " + pendingPayment.message);
+      return;
+    }
+    console.log("Pending payment created:", pendingPayment.paymentId);
+  } catch (err) {
+    console.error("Error creating pending payment:", err);
+    alert("Error creating payment. Please try again.");
     return;
   }
-  
-  const order = result.order
-  console.log(order);
 
-
+  // STEP 2: Open Razorpay popup
   const options = {
       key: "rzp_test_TeZEEYeRAWLZGl",
-      amount: order.amount, // Amount in paise
+      amount: order.amount,
       currency: order.currency,
       name: "Snitch",
       description: "Test Transaction",
-      order_id: order.id, // Generate order_id on server
-      handler: (response) => {
-        console.log(response);
-        alert("Payment Successful!");
+      order_id: order.id,
+      
+      handler: async function(response) {
+        console.log("Payment success:", response);
+        await updatePaymentStatus(order.id, response, "paid");
+      },
+
+      modal: {
+        ondismiss: async function() {
+          console.log("Payment cancelled by user");
+          await updatePaymentStatus(order.id, {}, "failed");
+        }
       },
 
       prefill: {
-        name:  user?.fullname,
+        name: user?.fullname,
         email: user?.email,
         contact: user?.contact,
       },
       
-         method: {
-    upi: true,
-    card: true,
-    netbanking: true,
-    wallet: true,
+      method: {
+        upi: true,
+        card: true,
+        netbanking: true,
+        wallet: true,
       },
 
       theme: {
@@ -189,8 +218,41 @@ async function  handleCheckOut(){
 
     const razorpayInstance = new Razorpay(options);
     razorpayInstance.open();
-  
+  }
 
+  // Helper function to update payment status
+  async function updatePaymentStatus(orderId, response, status) {
+    try {
+      const backendResponse = await fetch('/api/payment/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_order_id: orderId,
+          razorpay_signature: response.razorpay_signature,
+          status: status
+        })
+      });
+
+      const data = await backendResponse.json();
+      console.log("Payment updated:", data);
+
+      if (data.success) {
+        if (status === "paid") {
+          alert("Payment successful!");
+        } else {
+          alert("Payment was not completed. You can try again.");
+        }
+      } else {
+        alert("Error: " + data.message);
+      }
+    } catch (err) {
+      console.error("Error updating payment:", err);
+      alert("Error processing payment. Please contact support.");
+    }
   }
 
   const handleQuantityStep = (itemId, currentQuantity, delta) => {

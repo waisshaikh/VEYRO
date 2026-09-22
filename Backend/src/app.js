@@ -7,6 +7,7 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import authRouter from "./router/auth.router.js";
 import productRouter from "./router/product.routes.js"
 import cartRouter from "./router/cart.routes.js"
+import paymentRouter from "./router/payment.routes.js"
 import {config} from "./config/config.js";
 import Usermodel from "./models/user.model.js";
 import { googleAuthController } from "./controllers/auth.controller.js";
@@ -87,5 +88,6 @@ app.get("/auth/google/callback",
 app.use("/api/auth", authRouter);
 app.use("/api/products",productRouter);
 app.use("/api/cart", cartRouter);
+app.use("/api/payment", paymentRouter);
 
 export default app;

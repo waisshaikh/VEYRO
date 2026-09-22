@@ -150,22 +150,10 @@ export const useCart = () => {
     }
   }
 
-  async function handleCreateCartOrder() {
-    try {
-      dispatch(setLoading(true));
-      dispatch(clearError());
-      const data = await createCartOrder();
-      return { success: true, order: data.order };
-    } catch (err) {
-      const message =
-        err.response?.data?.message ||
-        err.message ||
-        "Failed to create order";
-      dispatch(setError(message));
-      return { success: false, error: message };
-    } finally {
-      dispatch(setLoading(false));
-    }
+  async function handleCreateCardOrder( ) {
+    const data = await createCartOrder()
+    return data.order
+    
   }
 
   // Search items in cart
@@ -203,7 +191,7 @@ export const useCart = () => {
     handleRemoveFromCart,
     handleClearCart,
     handleSearchCart,
-    handleCreateCartOrder,
+    handleCreateCardOrder,
     resetMessages
   };
 };
