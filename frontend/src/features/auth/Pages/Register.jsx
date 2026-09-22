@@ -102,7 +102,7 @@ export default function Register() {
       <div className="hidden lg:flex lg:w-1/2 relative bg-slate-900 overflow-hidden select-none">
         <img
           src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1400&auto=format&fit=crop"
-          alt="Snitch Luxury Collection"
+          alt="Veyro Luxury Collection"
           className="w-full h-full object-cover object-center"
         />
         {/* Subtle Gradient Overlay */}
@@ -112,7 +112,7 @@ export default function Register() {
         <div className="absolute top-8 left-8 z-10">
           <Link to="/" className="flex items-center gap-2.5 group">
             <span className="text-2xl font-black font-outfit tracking-[0.25em] text-white uppercase">
-              SNITCH
+              VEYRO
             </span>
             <span className="h-2 w-2 rounded-full bg-teal-400 shadow-[0_0_10px_#2dd4bf]" />
           </Link>
@@ -126,7 +126,7 @@ export default function Register() {
         <div className="flex items-center justify-between">
           <Link to="/" className="lg:hidden flex items-center gap-2">
             <span className="text-xl font-black font-outfit tracking-widest text-slate-950 uppercase">
-              SNITCH
+              VEYRO
             </span>
             <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
           </Link>
@@ -150,7 +150,7 @@ export default function Register() {
               Create Account
             </h1>
             <p className="text-sm text-slate-500 mt-1">
-              Join the SNITCH luxury clothing brand portal.
+              Join the VEYRO luxury clothing brand portal.
             </p>
           </div>
 
@@ -254,7 +254,7 @@ export default function Register() {
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="alex@snitch.com"
+                  placeholder="alex@veyro.com"
                   value={form.email}
                   onChange={updateField}
                   className={`w-full px-3.5 py-2.5 rounded-xl input-luxury text-sm ${
@@ -389,7 +389,7 @@ export default function Register() {
 
         {/* Footer */}
         <div className="text-center text-xs text-slate-400">
-          &copy; {new Date().getFullYear()} SNITCH APPAREL. All rights reserved.
+          &copy; {new Date().getFullYear()} VEYRO APPAREL. All rights reserved.
         </div>
 
       </div>

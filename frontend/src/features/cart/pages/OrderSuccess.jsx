@@ -141,7 +141,7 @@ const OrderSuccess = () => {
 
         <div className="security-note">
           <span>🔒</span>
-          <span>Secure Payment • Snitch Guarantee</span>
+          <span>Secure Payment • Veyro Guarantee</span>
         </div>
       </div>
     </div>

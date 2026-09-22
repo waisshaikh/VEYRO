@@ -401,7 +401,7 @@ export default function ProductDetail() {
           <section className="order-3 flex w-full flex-col md:pt-1">
 
             <div className="flex items-center justify-between">
-              <p className="text-sm text-[#8A8175]">Snitch collection</p>
+              <p className="text-sm text-[#8A8175]">Veyro collection</p>
               {isViewingMainProduct ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-900">
                   <span className="h-1.5 w-1.5 rounded-full bg-amber-600" />
@@ -628,7 +628,7 @@ export default function ProductDetail() {
             <div className="mt-7 border-t border-[#E8E3D9] pt-6">
               <h2 className="text-sm font-medium text-[#17140F]">Sold by</h2>
               <p className="mt-2 break-all text-sm text-[#8A8175]">
-                {product.seller || "Snitch seller"}
+                {product.seller || "Veyro seller"}
               </p>
             </div>
 

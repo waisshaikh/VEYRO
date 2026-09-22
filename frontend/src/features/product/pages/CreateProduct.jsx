@@ -557,7 +557,7 @@ export default function CreateProduct() {
                     <span>Publishing to Catalog...</span>
                   </>
                 ) : (
-                  "Publish to SNITCH Collection"
+                  "Publish to VEYRO Collection"
                 )}
               </button>
 
@@ -617,7 +617,7 @@ export default function CreateProduct() {
                 </p>
 
                 <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-                  <span className="font-semibold text-teal-700">SNITCH VERIFIED</span>
+                  <span className="font-semibold text-teal-700">VEYRO VERIFIED</span>
                   <span>Direct Dispatch</span>
                 </div>
               </div>

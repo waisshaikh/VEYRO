@@ -76,7 +76,7 @@ export default function Login() {
       <div className="hidden lg:flex lg:w-1/2 relative bg-slate-900 overflow-hidden select-none">
         <img
           src="https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=1400&auto=format&fit=crop"
-          alt="Snitch Luxury Apparel"
+          alt="Veyro Luxury Apparel"
           className="w-full h-full object-cover object-center"
         />
         {/* Subtle Gradient Overlay */}
@@ -86,7 +86,7 @@ export default function Login() {
         <div className="absolute top-8 left-8 z-10">
           <Link to="/" className="flex items-center gap-2.5 group">
             <span className="text-2xl font-black font-outfit tracking-[0.25em] text-white uppercase">
-              SNITCH
+              VEYRO
             </span>
             <span className="h-2 w-2 rounded-full bg-teal-400 shadow-[0_0_10px_#2dd4bf]" />
           </Link>
@@ -100,7 +100,7 @@ export default function Login() {
         <div className="flex items-center justify-between">
           <Link to="/" className="lg:hidden flex items-center gap-2">
             <span className="text-xl font-black font-outfit tracking-widest text-slate-950 uppercase">
-              SNITCH
+              VEYRO
             </span>
             <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
           </Link>
@@ -298,7 +298,7 @@ export default function Login() {
 
         {/* Footer */}
         <div className="text-center text-xs text-slate-400">
-          &copy; {new Date().getFullYear()} SNITCH APPAREL. All rights reserved.
+          &copy; {new Date().getFullYear()} VEYRO APPAREL. All rights reserved.
         </div>
 
       </div>

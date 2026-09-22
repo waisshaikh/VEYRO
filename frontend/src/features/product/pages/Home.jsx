@@ -68,7 +68,7 @@ const Home = () => {
               Shop latest products
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-              Explore all available products from SNITCH sellers.
+              Explore all available products from VEYRO sellers.
             </p>
           </div>
         </div>

@@ -184,7 +184,7 @@ async function handleCheckOut(){
       key: "rzp_test_TeZEEYeRAWLZGl",
       amount: order.amount,
       currency: order.currency,
-      name: "Snitch",
+      name: "Veyro",
       description: "Test Transaction",
       order_id: order.id,
       
@@ -643,7 +643,7 @@ async function handleCheckOut(){
 
               <div className="security-note">
                 <span>🔒</span>
-                <span>Secure Checkout • Snitch Guarantee</span>
+                <span>Secure Checkout • Veyro Guarantee</span>
               </div>
             </div>
           </aside>

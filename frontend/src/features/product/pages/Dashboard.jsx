@@ -195,7 +195,7 @@ const Dashboard = () => {
                         {(product.images?.length || 0) === 1 ? "" : "s"}
                       </span>
                       <span className="font-bold text-teal-700">
-                        SNITCH VERIFIED
+                        VEYRO VERIFIED
                       </span>
                     </div>
                   </div>

@@ -881,8 +881,8 @@ const SellerProductDetail = () => {
       {/* ── Footer ────────────────────────────────────────────────────────── */}
       <footer className="mt-auto border-t border-slate-200 bg-white py-8 text-center text-xs uppercase tracking-widest text-slate-400">
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="font-serif tracking-widest text-teal-700 font-bold">SNITCH ATELIER</span>
-          <span>© 2026 SNITCH LUXE INTERNATIONALE • ALL RIGHTS RESERVED</span>
+          <span className="font-serif tracking-widest text-teal-700 font-bold">VEYRO ATELIER</span>
+          <span>© 2026 VEYRO LUXE INTERNATIONALE • ALL RIGHTS RESERVED</span>
         </div>
       </footer>
     </div>

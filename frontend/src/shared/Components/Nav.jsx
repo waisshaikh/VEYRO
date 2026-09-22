@@ -52,7 +52,7 @@ const Nav = () => {
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-2 group">
             <span className="text-2xl font-black tracking-[0.25em] text-slate-950 transition-colors group-hover:text-amber-600">
-              SNITCH
+              VEYRO
             </span>
             <span className="h-2 w-2 rounded-full bg-amber-500 ring-2 ring-amber-200" />
           </Link>
