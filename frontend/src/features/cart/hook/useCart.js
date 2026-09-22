@@ -12,6 +12,7 @@ import {
   clearCart,
   setSearchQuery
 } from "../state/cart.slice.js";
+
 import {
   addToCart,
   getCart,
@@ -20,6 +21,7 @@ import {
   createCartOrder,
   clearCart as clearCartApi
 } from "../services/cart.api.js";
+
 
 export const useCart = () => {
   const dispatch = useDispatch();
@@ -148,10 +150,22 @@ export const useCart = () => {
     }
   }
 
-  async function handleCreateCardOrder( ) {
-    const data = await createCartOrder()
-    return data.order
-    
+  async function handleCreateCartOrder() {
+    try {
+      dispatch(setLoading(true));
+      dispatch(clearError());
+      const data = await createCartOrder();
+      return { success: true, order: data.order };
+    } catch (err) {
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to create order";
+      dispatch(setError(message));
+      return { success: false, error: message };
+    } finally {
+      dispatch(setLoading(false));
+    }
   }
 
   // Search items in cart
@@ -189,7 +203,7 @@ export const useCart = () => {
     handleRemoveFromCart,
     handleClearCart,
     handleSearchCart,
-    handleCreateCardOrder,
+    handleCreateCartOrder,
     resetMessages
   };
 };

@@ -2,6 +2,11 @@ import cartModel from "../models/cart.model.js"
 import productModel from "../models/product.model.js"
 import { stockOfVariant } from "../dao/product.dao.js"
 import { createOrder } from "../services/payment.service.js" 
+import { getCartDetails } from "../dao/cartDetail.dao.js"
+
+
+
+
 
 export const cartController = async (req, res) => {
     try {
@@ -133,29 +138,8 @@ export const getCartController = async (req, res) => {
     const user = req.user
 
     try {
-        // Aggregation pipeline
-        const cart = await cartModel.aggregate([
-            { $match: { user: user._id } },
-            { $unwind: { path: '$items', preserveNullAndEmptyArrays: true } },
-            {
-                $lookup: {
-                    from: 'products',
-                    localField: 'items.product',
-                    foreignField: '_id',
-                    as: 'items.product'
-                }
-            },
-            { $unwind: { path: '$items.product', preserveNullAndEmptyArrays: true } },
-            {
-                $group: {
-                    _id: '$_id',
-                    user: { $first: '$user' },
-                    createdAt: { $first: '$createdAt' },
-                    updatedAt: { $first: '$updatedAt' },
-                    items: { $push: '$items' }
-                }
-            }
-        ])
+        let cart = await getCartDetails(user._id)
+        
 
         const result = cart.length > 0 ? cart[0] : null
 
@@ -179,7 +163,9 @@ export const getCartController = async (req, res) => {
             message: "Cart fetched successfully",
             success: true,
             cart: result,
-            items: result.items || []
+            items: result.items || [],
+            totalPrice: result.totalPrice || 0,
+            currency: result.currency || 'INR'
         })
     } catch (error) {
         console.error("Error in getCartController:", error)
@@ -309,7 +295,19 @@ export const clearCartController = async (req, res) => {
 
 
 export const createOrderController = async(req,res) =>{
-    const order = await createOrder({amount:100, currency:"INR"})
+
+    const cart = await getCartDetails(req.user._id)
+
+    const cartData = cart.length > 0 ? cart[0] : null
+    
+    if(!cartData || !cartData.items || cartData.items.length === 0){
+        return res.status(400).json({
+            message:"Cart is empty",
+            success:false
+        })
+    }
+
+    const order = await createOrder({amount: cartData.totalPrice, currency: cartData.currency})
 
     return res.status(200).json({
         message:"order Created Successfully",

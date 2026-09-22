@@ -111,7 +111,7 @@ export const Cart = () => {
     handleRemoveFromCart,
     handleClearCart,
     handleSearchCart,
-    handleCreateCardOrder,
+    handleCreateCartOrder,
     resetMessages,
   } = useCart();
    
@@ -146,7 +146,14 @@ export const Cart = () => {
   
 
 async function  handleCheckOut(){
-  const order = await handleCreateCardOrder()
+  const result = await handleCreateCartOrder()
+  
+  if (!result.success) {
+    console.error("Failed to create order:", result.error);
+    return;
+  }
+  
+  const order = result.order
   console.log(order);
 
 

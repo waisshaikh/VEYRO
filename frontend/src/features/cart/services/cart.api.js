@@ -38,7 +38,7 @@ export async function clearCart() {
 }
 
 
-export async function createCartOrder (){
+export async function createCartOrder(){
   const  response = await cartApiInstance.post("/payment/create/order")
   return response.data
 
