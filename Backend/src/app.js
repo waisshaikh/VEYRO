@@ -18,14 +18,14 @@ const app = express();
 const allowedOrigins = [
   config.FRONTEND_ORIGIN,
   config.BACKEND_ORIGIN,
-  "http://localhost:5173",
-  "http://localhost:3000",
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
+    // Allow any localhost port (dev)
+    if (origin.startsWith("http://localhost:")) return callback(null, true);
     // Allow any Vercel preview deployment for this project
     if (origin.endsWith(".vercel.app") || allowedOrigins.includes(origin)) {
       return callback(null, true);
@@ -47,7 +47,7 @@ passport.use(
     {
       clientID: config.Client_ID,
       clientSecret: config.Client_secret,
-      callbackURL: `${config.BACKEND_ORIGIN}/auth/google/callback`,
+      callbackURL: `${config.BACKEND_ORIGIN}/api/auth/google/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -86,19 +86,7 @@ app.get("/", (req, res) => {
   res.status(200).json({ message: "Server is running" });
 });
 
-// Google OAuth routes (must match Google Cloud Console redirect URI exactly)
-
-app.get("/auth/google",
-  passport.authenticate("google", { scope: ["profile", "email"], session: false })
-);
-
-app.get("/auth/google/callback",
-  passport.authenticate("google", {
-    session: false,
-    failureRedirect: `${config.FRONTEND_ORIGIN}/register?error=google_failed`,
-  }),
-  googleAuthController
-);
+// Google OAuth routes are handled by authRouter under /api/auth
 
 app.use("/api/auth", authRouter);
 app.use("/api/products",productRouter);

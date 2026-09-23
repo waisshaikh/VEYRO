@@ -129,11 +129,11 @@ export const googleAuthController = async (req, res) => {
             sameSite: "lax",
         });
 
-        // Redirect to frontend home page after successful login
-        return res.redirect("http://localhost:5173/");
+        // Pass token in URL so frontend can store in localStorage for Bearer auth
+        return res.redirect(`${config.FRONTEND_ORIGIN}/?token=${token}`);
     } catch (error) {
         console.error("Google auth error:", error);
-        return res.redirect("http://localhost:5173/register?error=google_failed");
+        return res.redirect(`${config.FRONTEND_ORIGIN}/register?error=google_failed`);
     }
 };
 
