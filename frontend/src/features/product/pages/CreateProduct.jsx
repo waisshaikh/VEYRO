@@ -215,7 +215,7 @@ export default function CreateProduct() {
     CURRENCIES.find((c) => c.code === formData.priceCurrency) || CURRENCIES[0];
 
   return (
-    <div className="min-h-screen lg:h-screen w-full bg-slate-50 text-slate-900 flex flex-col overflow-y-auto lg:overflow-hidden font-sans">
+    <div className="min-h-screen w-full bg-slate-50 text-slate-900 flex flex-col font-sans">
       
       {/* Top Header */}
       <header className="shrink-0 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md px-6 sm:px-12 py-3.5 flex items-center justify-between z-20 shadow-xs">
@@ -236,8 +236,8 @@ export default function CreateProduct() {
         </div>
       </header>
 
-      {/* Main Studio Viewport (Expanded max-w-7xl with slightly taller components) */}
-      <main className="flex-1 max-w-[1480px] w-full mx-auto p-4 sm:p-8 flex flex-col justify-center overflow-y-auto lg:overflow-hidden">
+      {/* Main Studio Viewport */}
+      <main className="flex-1 max-w-[1480px] w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col">
         
         {/* Status Feedback */}
         {apiError && (
@@ -259,11 +259,11 @@ export default function CreateProduct() {
         )}
 
         {/* 2-Column Balanced Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           
-          {/* Left Form Area (7 Cols) */}
+          {/* Left Form Area (8 Cols) */}
           <div className="lg:col-span-8 flex flex-col">
-            <form onSubmit={handleSubmit} noValidate className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm flex flex-col justify-between space-y-5 min-h-[520px]">
+            <form onSubmit={handleSubmit} noValidate className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm flex flex-col justify-between space-y-5">
               
               {/* Image Upload Zone */}
               <div className="space-y-2.5">
@@ -343,7 +343,7 @@ export default function CreateProduct() {
               {/* Title, Currency & Price in One Row */}
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
                 <div className="sm:col-span-6 space-y-1">
-                  <label htmlFor="tittle" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  <label htmlFor="tittle" className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
                     Product Title
                   </label>
                   <input
@@ -353,17 +353,17 @@ export default function CreateProduct() {
                     placeholder="e.g. Tailored Wool Blazer"
                     value={formData.tittle}
                     onChange={handleInputChange}
-                    className={`w-full px-3.5 py-2.5 rounded-xl input-luxury text-sm ${
-                      errors.tittle ? "border-red-500" : ""
-                    }`}
+                    className={`w-full px-4 py-2.5 rounded-xl border ${
+                      errors.tittle ? "border-red-500 bg-red-50/30" : "border-slate-300 focus:border-teal-600"
+                    } bg-slate-50 focus:bg-white text-slate-900 font-medium text-sm focus:ring-2 focus:ring-teal-600/20 focus:outline-none transition-all shadow-2xs`}
                   />
                   {errors.tittle && (
-                    <p className="text-xs text-red-600">{errors.tittle}</p>
+                    <p className="text-xs text-red-600 font-medium">{errors.tittle}</p>
                   )}
                 </div>
 
                 <div className="sm:col-span-3 space-y-1">
-                  <label htmlFor="priceCurrency" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  <label htmlFor="priceCurrency" className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
                     Currency
                   </label>
                   <select
@@ -371,7 +371,7 @@ export default function CreateProduct() {
                     name="priceCurrency"
                     value={formData.priceCurrency}
                     onChange={handleInputChange}
-                    className="w-full px-3.5 py-2.5 rounded-xl input-luxury text-sm cursor-pointer"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-teal-600 bg-slate-50 focus:bg-white text-slate-900 font-semibold text-sm focus:ring-2 focus:ring-teal-600/20 focus:outline-none cursor-pointer transition-all shadow-2xs"
                   >
                     {CURRENCIES.map((curr) => (
                       <option key={curr.code} value={curr.code}>
@@ -382,7 +382,7 @@ export default function CreateProduct() {
                 </div>
 
                 <div className="sm:col-span-3 space-y-1">
-                  <label htmlFor="priceAmount" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  <label htmlFor="priceAmount" className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
                     Price ({currentCurrency.symbol})
                   </label>
                   <input
@@ -392,57 +392,68 @@ export default function CreateProduct() {
                     placeholder="2999"
                     value={formData.priceAmount}
                     onChange={handleInputChange}
-                    className={`w-full px-3.5 py-2.5 rounded-xl input-luxury text-sm ${
-                      errors.priceAmount ? "border-red-500" : ""
-                    }`}
+                    className={`w-full px-4 py-2.5 rounded-xl border ${
+                      errors.priceAmount ? "border-red-500 bg-red-50/30" : "border-slate-300 focus:border-teal-600"
+                    } bg-slate-50 focus:bg-white text-slate-900 font-medium text-sm focus:ring-2 focus:ring-teal-600/20 focus:outline-none transition-all shadow-2xs`}
                   />
                   {errors.priceAmount && (
-                    <p className="text-xs text-red-600">{errors.priceAmount}</p>
+                    <p className="text-xs text-red-600 font-medium">{errors.priceAmount}</p>
                   )}
                 </div>
               </div>
 
               {/* Sizes & Colors Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Sizes */}
                 <div className="space-y-2">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Available Sizes
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      Available Sizes
+                    </label>
+                    {formData.selectedSizes.length > 0 && (
+                      <span className="text-[11px] font-semibold text-teal-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-full">
+                        {formData.selectedSizes.length} selected
+                      </span>
+                    )}
+                  </div>
                   <div className="flex flex-wrap gap-2">
-                    {SIZE_PRESETS.map((size) => (
-                      <button
-                        key={size}
-                        type="button"
-                        onClick={() => {
-                          setFormData((prev) => {
-                            const updated = prev.selectedSizes.includes(size)
-                              ? prev.selectedSizes.filter((s) => s !== size)
-                              : [...prev.selectedSizes, size];
-                            return { ...prev, selectedSizes: updated };
-                          });
-                          if (errors.sizes) {
-                            setErrors((prev) => ({ ...prev, sizes: "" }));
-                          }
-                        }}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                          formData.selectedSizes.includes(size)
-                            ? "bg-teal-600 text-white border border-teal-700"
-                            : "bg-slate-100 text-slate-700 border border-slate-200 hover:border-teal-400"
-                        }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
+                    {SIZE_PRESETS.map((size) => {
+                      const isSelected = formData.selectedSizes.includes(size);
+                      return (
+                        <button
+                          key={size}
+                          type="button"
+                          onClick={() => {
+                            setFormData((prev) => {
+                              const updated = prev.selectedSizes.includes(size)
+                                ? prev.selectedSizes.filter((s) => s !== size)
+                                : [...prev.selectedSizes, size];
+                              return { ...prev, selectedSizes: updated };
+                            });
+                            if (errors.sizes) {
+                              setErrors((prev) => ({ ...prev, sizes: "" }));
+                            }
+                          }}
+                          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
+                            isSelected
+                              ? "bg-teal-600 text-white border-2 border-teal-700 shadow-sm ring-2 ring-teal-600/30 scale-105"
+                              : "bg-white text-slate-700 border border-slate-300 hover:border-teal-500 hover:bg-teal-50/60 hover:text-teal-800 shadow-2xs active:scale-95"
+                          }`}
+                        >
+                          {isSelected && <span className="mr-1">✓</span>}
+                          {size}
+                        </button>
+                      );
+                    })}
                   </div>
                   {errors.sizes && (
-                    <p className="text-xs text-red-600">{errors.sizes}</p>
+                    <p className="text-xs text-red-600 font-medium">{errors.sizes}</p>
                   )}
                 </div>
 
                 {/* Colors */}
                 <div className="space-y-2">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
                     Available Colors
                   </label>
                   <div className="flex gap-2">
@@ -467,7 +478,7 @@ export default function CreateProduct() {
                           setColorInput("");
                         }
                       }}
-                      className="flex-1 px-3.5 py-2.5 rounded-xl input-luxury text-sm"
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 focus:border-teal-600 bg-slate-50 focus:bg-white text-slate-900 font-medium text-sm focus:ring-2 focus:ring-teal-600/20 focus:outline-none transition-all shadow-2xs"
                     />
                     <button
                       type="button"
@@ -486,10 +497,42 @@ export default function CreateProduct() {
                           setColorInput("");
                         }
                       }}
-                      className="px-4 py-2.5 rounded-xl bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700 transition"
+                      className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs uppercase tracking-wider transition-all active:scale-95 shadow-xs cursor-pointer"
                     >
                       Add
                     </button>
+                  </div>
+
+                  {/* Preset Color Chips */}
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 self-center mr-1">Quick Add:</span>
+                    {["Black", "White", "Navy Blue", "Red", "Emerald", "Maroon"].map((c) => {
+                      const isAdded = formData.selectedColors.includes(c);
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => {
+                            setFormData((prev) => {
+                              const updated = isAdded
+                                ? prev.selectedColors.filter((col) => col !== c)
+                                : [...prev.selectedColors, c];
+                              return { ...prev, selectedColors: updated };
+                            });
+                            if (errors.colors) {
+                              setErrors((prev) => ({ ...prev, colors: "" }));
+                            }
+                          }}
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
+                            isAdded
+                              ? "bg-teal-600 text-white border-teal-700 font-bold"
+                              : "bg-white text-slate-600 border-slate-200 hover:border-teal-400 hover:bg-teal-50"
+                          }`}
+                        >
+                          {isAdded ? `✓ ${c}` : `+ ${c}`}
+                        </button>
+                      );
+                    })}
                   </div>
 
                   {/* Selected Colors Tags */}
@@ -498,9 +541,9 @@ export default function CreateProduct() {
                       {formData.selectedColors.map((color) => (
                         <div
                           key={color}
-                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-50 border border-teal-200 rounded-lg text-xs font-medium text-slate-700"
+                          className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-600 text-white border border-teal-700 rounded-lg text-xs font-bold shadow-xs transition-all"
                         >
-                          {color}
+                          <span>{color}</span>
                           <button
                             type="button"
                             onClick={() => {
@@ -509,7 +552,8 @@ export default function CreateProduct() {
                                 selectedColors: prev.selectedColors.filter((c) => c !== color),
                               }));
                             }}
-                            className="ml-1 text-teal-600 hover:text-red-600 font-bold"
+                            className="w-4 h-4 rounded-full bg-teal-800 hover:bg-rose-600 text-white flex items-center justify-center text-[10px] font-bold transition-colors ml-1 cursor-pointer"
+                            title="Remove color"
                           >
                             ×
                           </button>
@@ -519,14 +563,14 @@ export default function CreateProduct() {
                   )}
 
                   {errors.colors && (
-                    <p className="text-xs text-red-600">{errors.colors}</p>
+                    <p className="text-xs text-red-600 font-medium">{errors.colors}</p>
                   )}
                 </div>
               </div>
 
               {/* Description */}
               <div className="space-y-1">
-                <label htmlFor="description" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <label htmlFor="description" className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
                   Description & Composition
                 </label>
                 <textarea
@@ -536,12 +580,12 @@ export default function CreateProduct() {
                   placeholder="Describe fabric composition, fit, and styling details..."
                   value={formData.description}
                   onChange={handleInputChange}
-                  className={`w-full px-3.5 py-2 rounded-xl input-luxury text-sm resize-none ${
-                    errors.description ? "border-red-500" : ""
-                  }`}
+                  className={`w-full px-4 py-3 rounded-xl border ${
+                    errors.description ? "border-red-500 bg-red-50/30" : "border-slate-300 focus:border-teal-600"
+                  } bg-slate-50 focus:bg-white text-slate-900 font-medium text-sm focus:ring-2 focus:ring-teal-600/20 focus:outline-none transition-all shadow-2xs resize-y`}
                 />
                 {errors.description && (
-                  <p className="text-xs text-red-600">{errors.description}</p>
+                  <p className="text-xs text-red-600 font-medium">{errors.description}</p>
                 )}
               </div>
 
@@ -549,7 +593,7 @@ export default function CreateProduct() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-4 px-5 rounded-xl btn-gradient-primary font-bold text-sm uppercase tracking-wider shadow-md cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
+                className="w-full py-3.5 px-6 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-[0.99] text-white font-bold text-sm uppercase tracking-widest shadow-md hover:shadow-lg cursor-pointer disabled:opacity-60 transition-all flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
                   <>
@@ -564,9 +608,9 @@ export default function CreateProduct() {
             </form>
           </div>
 
-          {/* Right Live Catalog Preview (5 Cols) */}
-          <div className="lg:col-span-4 flex flex-col">
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col justify-between h-full min-h-[520px]">
+          {/* Right Live Catalog Preview (4 Cols) */}
+          <div className="lg:col-span-4 flex flex-col lg:sticky lg:top-6 lg:self-start">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col justify-between min-h-[460px]">
               
               <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <span className="text-xs font-bold font-outfit uppercase tracking-wider text-slate-800">

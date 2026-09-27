@@ -8,6 +8,7 @@ import Dashboard from "../features/product/pages/Dashboard.jsx";
 import Protected from "../features/auth/components/Protected.jsx";
 import ProductDetail from "../features/product/pages/ProductDetail.jsx";
 import SellerProductDetail from "../features/product/pages/SellerProductDetail.jsx";
+import SellerOrders from "../features/product/pages/SellerOrders.jsx";
 import Cart from "../features/cart/pages/Cart.jsx";
 import OrderSuccess from "../features/cart/pages/OrderSuccess.jsx";
 import Orders from "../features/cart/pages/Orders.jsx";
@@ -64,6 +65,14 @@ export const router = createBrowserRouter([
             element: (
               <Protected role="seller">
                 <Dashboard />
+              </Protected>
+            ),
+          },
+          {
+            path: "/seller/orders",
+            element: (
+              <Protected role="seller">
+                <SellerOrders />
               </Protected>
             ),
           },

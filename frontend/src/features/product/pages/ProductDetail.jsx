@@ -280,196 +280,193 @@ export default function ProductDetail() {
 
   /* ─────────────────────────────────────────────
      Main UI
-   */
+  ───────────────────────────────────────────── */
 
   return (
-    <main className="min-h-screen bg-[#FAFAF8]">
-      <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-10">
+    <main className="min-h-screen bg-[#FBFBF9] text-slate-800">
+      <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
 
-        {/* Back */}
-        <Link
-          to="/"
-          className="mb-8 inline-flex items-center gap-2 text-sm text-[#8A8175] transition hover:text-[#17140F]"
-        >
-          <span aria-hidden="true">←</span> Back to shop
-        </Link>
+        {/* Back Link */}
+        <div className="mb-4 flex items-center justify-between">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-slate-500 transition hover:text-slate-900"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Collection
+          </Link>
+          <div className="flex items-center gap-2">
+            {isViewingMainProduct ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50/80 px-3 py-1 text-xs font-semibold text-amber-800 shadow-sm">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-600 animate-pulse" />
+                Main Product
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
+                <span className="h-1.5 w-1.5 rounded-full bg-slate-900" />
+                Variant Selected
+              </span>
+            )}
+          </div>
+        </div>
 
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-[88px_1fr_1fr] md:gap-8 lg:gap-12">
-
-          {/* ==================================================
-              THUMBNAIL RAIL — desktop only, sits left of hero
-          ================================================== */}
-
-          {images.length > 1 && (
-            <div className="order-2 hidden flex-col gap-3 md:order-1 md:flex md:sticky md:top-8 md:self-start">
-              {images.map((image, index) => {
-                const isSelected = selectedImage === image;
-                return (
-                  <button
-                    key={`${image}-${index}`}
-                    type="button"
-                    onClick={() => setSelectedImage(image)}
-                    aria-label={`View image ${index + 1}`}
-                    className={`aspect-[4/5] w-full overflow-hidden rounded-sm bg-[#EFEBE1] transition ${
-                      isSelected
-                        ? "ring-1 ring-[#17140F] ring-offset-2 ring-offset-[#FAFAF8]"
-                        : "opacity-60 hover:opacity-100"
-                    }`}
-                  >
-                    <img
-                      src={image}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
-                  </button>
-                );
-              })}
-            </div>
-          )}
+        {/* 2-Column Responsive Layout */}
+        <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-12 lg:gap-10">
 
           {/* ==================================================
-              HERO IMAGE
+              MEDIA SECTION (Left Column - 6/12 or 7/12)
           ================================================== */}
+          <div className="md:col-span-6 lg:col-span-7 md:sticky md:top-20">
+            <div className="flex flex-col gap-3 sm:flex-row">
 
-          <section className="order-1 w-full md:order-2 md:sticky md:top-8 md:self-start">
-            <div className="group relative aspect-[4/5] w-full overflow-hidden rounded-sm bg-[#EFEBE1]">
-              {selectedImage ? (
-                <img
-                  src={selectedImage}
-                  alt={product.tittle || "Product image"}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center text-sm text-[#8A8175]">
-                  No image available
+              {/* Thumbnails list (Desktop & Tablet) */}
+              {images.length > 1 && (
+                <div className="order-2 flex gap-2 overflow-x-auto pb-2 sm:order-1 sm:flex-col sm:overflow-y-auto sm:pb-0 sm:pr-1 max-h-[480px] scrollbar-thin">
+                  {images.map((image, index) => {
+                    const isSelected = selectedImage === image;
+                    return (
+                      <button
+                        key={`${image}-${index}`}
+                        type="button"
+                        onClick={() => setSelectedImage(image)}
+                        aria-label={`View image ${index + 1}`}
+                        className={`relative h-16 w-14 sm:h-20 sm:w-16 flex-shrink-0 overflow-hidden rounded-lg bg-stone-50 border transition-all ${
+                          isSelected
+                            ? "border-slate-900 ring-2 ring-slate-900 ring-offset-1 ring-offset-[#FBFBF9] opacity-100 scale-95"
+                            : "border-slate-200 opacity-70 hover:opacity-100"
+                        }`}
+                      >
+                        <img
+                          src={image}
+                          alt=""
+                          className="h-full w-full object-contain p-1"
+                        />
+                      </button>
+                    );
+                  })}
                 </div>
               )}
 
-              {canSlideImages && (
-                <>
-                  <button
-                    type="button"
-                    onClick={showPreviousImage}
-                    aria-label="Show previous image"
-                    className="absolute left-4 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl text-[#17140F] opacity-0 shadow-sm transition hover:bg-white active:scale-95 group-hover:flex group-hover:opacity-100 group-focus-within:flex group-focus-within:opacity-100"
-                  >
-                    ‹
-                  </button>
+              {/* Main Display Image */}
+              <div className="group relative order-1 flex-1 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/10 sm:order-2">
+                <div className="relative aspect-[3/4] max-h-[500px] w-full overflow-hidden bg-white flex items-center justify-center p-2">
+                  {selectedImage ? (
+                    <img
+                      src={selectedImage}
+                      alt={product.tittle || "Product preview"}
+                      className="max-h-full max-w-full object-contain transition-transform duration-500 group-hover:scale-102"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-sm text-slate-400">
+                      No image available
+                    </div>
+                  )}
 
-                  <button
-                    type="button"
-                    onClick={showNextImage}
-                    aria-label="Show next image"
-                    className="absolute right-4 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl text-[#17140F] opacity-0 shadow-sm transition hover:bg-white active:scale-95 group-hover:flex group-hover:opacity-100 group-focus-within:flex group-focus-within:opacity-100"
-                  >
-                    ›
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* Thumbnails — mobile only */}
-            {images.length > 1 && (
-              <div className="mt-4 flex gap-3 overflow-x-auto pb-1 md:hidden">
-                {images.map((image, index) => {
-                  const isSelected = selectedImage === image;
-                  return (
-                    <button
-                      key={`${image}-${index}`}
-                      type="button"
-                      onClick={() => setSelectedImage(image)}
-                      className={`h-20 w-16 flex-none overflow-hidden rounded-sm bg-[#EFEBE1] transition ${
-                        isSelected ? "ring-1 ring-[#17140F]" : "opacity-60"
-                      }`}
-                    >
-                      <img
-                        src={image}
-                        alt={`${product.tittle || "Product"} thumbnail ${index + 1}`}
-                        className="h-full w-full object-cover"
-                      />
-                    </button>
-                  );
-                })}
+                  {/* Navigation Arrows */}
+                  {canSlideImages && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={showPreviousImage}
+                        aria-label="Previous image"
+                        className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-slate-900/80 text-white shadow-md backdrop-blur-sm opacity-0 transition-all hover:bg-slate-900 active:scale-95 group-hover:opacity-100"
+                      >
+                        ‹
+                      </button>
+                      <button
+                        type="button"
+                        onClick={showNextImage}
+                        aria-label="Next image"
+                        className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-slate-900/80 text-white shadow-md backdrop-blur-sm opacity-0 transition-all hover:bg-slate-900 active:scale-95 group-hover:opacity-100"
+                      >
+                        ›
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
-            )}
-          </section>
+            </div>
+          </div>
 
           {/* ==================================================
-              PRODUCT INFO
+              PRODUCT DETAILS SECTION (Right Column - 6/12 or 5/12)
           ================================================== */}
+          <div className="flex flex-col md:col-span-6 lg:col-span-5">
 
-          <section className="order-3 flex w-full flex-col md:pt-1">
-
+            {/* Brand / Collection */}
             <div className="flex items-center justify-between">
-              <p className="text-sm text-[#8A8175]">Veyro collection</p>
-              {isViewingMainProduct ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-900">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-600" />
-                  Main Product
+              <span className="text-xs font-semibold uppercase tracking-widest text-amber-800/80">
+                Veyro Signature
+              </span>
+              {selectedVariant ? (
+                <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${
+                  selectedVariant.stock > 0 ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-rose-50 text-rose-700 border border-rose-200"
+                }`}>
+                  {selectedVariant.stock > 0 ? `${selectedVariant.stock} in stock` : "Out of stock"}
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-900">
-                  <span className="h-1.5 w-1.5 rounded-full bg-slate-900" />
-                  Variant Selected
+                <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  In Stock
                 </span>
               )}
             </div>
 
-            <h1 className="mt-3 font-serif text-3xl leading-tight text-[#17140F] sm:text-[2.35rem]">
+            {/* Title */}
+            <h1 className="mt-2 font-serif text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">
               {product.tittle || "Untitled product"}
             </h1>
 
-            {/* Price Section */}
-            <div className="mt-5 flex items-baseline gap-3">
-              <p className="font-serif text-2xl text-[#17140F]">
+            {/* Pricing Section */}
+            <div className="mt-3 flex items-baseline gap-3">
+              <span className="font-serif text-2xl font-semibold text-slate-900 sm:text-3xl">
                 {formatPrice(selectedVariant?.price || product.price)}
-              </p>
+              </span>
               {!isViewingMainProduct && product.price?.amount && (
-                <span className="text-xs text-[#8A8175]">
-                  (Main product base: {formatPrice(product.price)})
+                <span className="text-xs text-slate-400">
+                  (Base: {formatPrice(product.price)})
                 </span>
               )}
+              <span className="text-xs text-slate-500">Inclusive of all taxes</span>
             </div>
-            <p className="mt-1 text-xs text-[#8A8175]">
-              Inclusive of all applicable taxes
-            </p>
 
-            <div className="my-8 h-px bg-[#E8E3D9]" />
+            <div className="my-4 h-px bg-slate-200/80" />
 
-            {/* Visual Swatches & Main Product Switcher */}
+            {/* Variant / Option Pills */}
             {product?.variants && product.variants.length > 0 && (
-              <div className="mb-6">
-                <div className="mb-2.5 flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-[#17140F]">
-                    Select Option
-                  </h3>
+              <div className="mb-4">
+                <div className="mb-2 flex items-center justify-between text-xs">
+                  <span className="font-semibold uppercase tracking-wider text-slate-700">
+                    Select Option / Edition
+                  </span>
                   {!isViewingMainProduct && (
                     <button
                       type="button"
                       onClick={handleSelectMainProduct}
-                      className="text-xs font-semibold text-amber-800 underline transition hover:text-amber-950"
+                      className="font-medium text-amber-800 underline transition hover:text-amber-950"
                     >
-                      ← Back to Main Product
+                      Reset to Main Product
                     </button>
                   )}
                 </div>
 
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex flex-wrap gap-2">
                   {/* Main Product Switcher Pill */}
                   <button
                     type="button"
                     onClick={handleSelectMainProduct}
-                    className={`flex items-center gap-2 rounded-lg border-2 p-1.5 pr-3 text-xs font-medium transition ${
+                    className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-medium transition-all ${
                       isViewingMainProduct
-                        ? "border-[#17140F] bg-[#17140F] text-[#FAFAF8] shadow-sm"
-                        : "border-[#E8E3D9] bg-white text-[#17140F] hover:border-[#17140F]"
+                        ? "border-slate-900 bg-slate-900 text-white shadow-sm"
+                        : "border-slate-200 bg-white text-slate-800 hover:border-slate-400"
                     }`}
                   >
                     {product?.images?.[0] && (
                       <img
                         src={getImageUrl(product.images[0])}
                         alt="Main Product"
-                        className="h-8 w-8 rounded object-cover"
+                        className="h-6 w-6 rounded-md object-contain bg-stone-100 p-0.5"
                       />
                     )}
                     <span>Main Product</span>
@@ -489,17 +486,17 @@ export default function ProductDetail() {
                         key={v._id || idx}
                         type="button"
                         onClick={() => handleSelectVariant(v)}
-                        className={`flex items-center gap-2 rounded-lg border-2 p-1.5 pr-3 text-xs font-medium transition ${
+                        className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-medium transition-all ${
                           isSelected
-                            ? "border-[#17140F] bg-[#17140F] text-[#FAFAF8] shadow-sm"
-                            : "border-[#E8E3D9] bg-white text-[#17140F] hover:border-[#17140F]"
+                            ? "border-slate-900 bg-slate-900 text-white shadow-sm"
+                            : "border-slate-200 bg-white text-slate-800 hover:border-slate-400"
                         }`}
                       >
                         {vImg && (
                           <img
                             src={getImageUrl(vImg)}
                             alt={label}
-                            className="h-8 w-8 rounded object-cover"
+                            className="h-6 w-6 rounded-md object-contain bg-stone-100 p-0.5"
                           />
                         )}
                         <span>{label}</span>
@@ -510,23 +507,20 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {/* Variant Attribute Selectors (Size, Color, etc.) */}
+            {/* Dynamic Attribute Selectors (Size, Color, etc.) */}
             {Object.keys(attributeOptions).length > 0 && (
-              <div className="mb-8 space-y-4">
+              <div className="mb-4 space-y-3">
                 {Object.entries(attributeOptions).map(([attrKey, attrValues]) => (
                   <div key={attrKey}>
-                    <div className="mb-2 flex items-center justify-between">
-                      <h3 className="text-sm font-medium text-[#17140F]">
-                        {attrKey}:{" "}
-                        <span className="font-normal text-[#8A8175]">
-                          {selectedAttributes[attrKey] || "Select " + attrKey}
-                        </span>
-                      </h3>
+                    <div className="mb-1.5 flex items-center justify-between text-xs">
+                      <span className="font-semibold uppercase tracking-wider text-slate-700">
+                        {attrKey}: <span className="font-normal text-slate-500">{selectedAttributes[attrKey] || "Choose option"}</span>
+                      </span>
                       {selectedAttributes[attrKey] && (
                         <button
                           type="button"
                           onClick={() => handleSelectAttribute(attrKey, selectedAttributes[attrKey])}
-                          className="text-xs text-[#8A8175] hover:text-[#17140F]"
+                          className="text-slate-400 hover:text-slate-700 underline"
                         >
                           Clear
                         </button>
@@ -539,10 +533,10 @@ export default function ProductDetail() {
                           <button
                             key={value}
                             onClick={() => handleSelectAttribute(attrKey, value)}
-                            className={`rounded-md border-2 px-4 py-2 text-sm font-medium transition ${
+                            className={`min-w-[42px] rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all ${
                               isSelected
-                                ? "border-[#17140F] bg-[#17140F] text-[#FAFAF8]"
-                                : "border-[#D4CBBB] text-[#17140F] hover:border-[#17140F]"
+                                ? "border-slate-900 bg-slate-900 text-white shadow-sm"
+                                : "border-slate-200 bg-white text-slate-800 hover:border-slate-400"
                             }`}
                           >
                             {value}
@@ -555,85 +549,31 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {/* Stock Status */}
-            <div className="mb-6">
-              {selectedVariant ? (
-                <p className={`text-sm font-medium ${
-                  selectedVariant.stock > 0 ? "text-green-600" : "text-red-600"
-                }`}>
-                  {selectedVariant.stock > 0 
-                    ? `${selectedVariant.stock} in stock` 
-                    : "Out of stock"}
-                </p>
-              ) : (
-                <p className="text-sm font-medium text-green-600">
-                  ✓ Available to order (Main Product)
-                </p>
-              )}
-            </div>
-
-            {/* Specifications Card */}
-            <div className="mb-8 rounded-sm bg-[#F5F0E8] p-4">
-              <h3 className="mb-3 text-sm font-medium text-[#17140F]">
-                {selectedVariant ? "Variant Specifications" : "Main Product Details"}
-              </h3>
-              <div className="space-y-2">
-                {selectedVariant ? (
-                  <>
-                    {Object.entries(selectedAttributes).map(([key, value]) => (
-                      <div key={key} className="flex justify-between text-sm">
-                        <span className="text-[#8A8175]">{key}:</span>
-                        <span className="font-medium text-[#17140F]">{value}</span>
-                      </div>
-                    ))}
-                    <div className="flex justify-between text-sm">
-                      <span className="text-[#8A8175]">Price:</span>
-                      <span className="font-medium text-[#17140F]">
-                        {formatPrice(selectedVariant.price || product.price)}
-                      </span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-[#8A8175]">Item Type:</span>
-                      <span className="font-medium text-[#17140F]">Main Product (Base)</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-[#8A8175]">Price:</span>
-                      <span className="font-medium text-[#17140F]">
-                        {formatPrice(product.price)}
-                      </span>
-                    </div>
-                    {product?.variants?.length > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-[#8A8175]">Available Variants:</span>
-                        <span className="font-medium text-[#17140F]">
-                          {product.variants.length} options available
-                        </span>
-                      </div>
-                    )}
-                  </>
-                )}
+            {/* Quantity Selector + Stock Note */}
+            <div className="mb-5 flex items-center gap-4">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-700">Quantity</span>
+              <div className="flex items-center rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 active:scale-95 disabled:opacity-40"
+                  disabled={quantity <= 1}
+                >
+                  -
+                </button>
+                <span className="w-8 text-center text-xs font-semibold text-slate-900">{quantity}</span>
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => q + 1)}
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 active:scale-95"
+                >
+                  +
+                </button>
               </div>
             </div>
 
-            <div>
-              <h2 className="text-sm font-medium text-[#17140F]">Description</h2>
-              <p className="mt-3 max-w-[46ch] text-sm leading-7 text-[#5C564A]">
-                {product.description || "No description available."}
-              </p>
-            </div>
-
-            <div className="mt-7 border-t border-[#E8E3D9] pt-6">
-              <h2 className="text-sm font-medium text-[#17140F]">Sold by</h2>
-              <p className="mt-2 break-all text-sm text-[#8A8175]">
-                {product.seller || "Veyro seller"}
-              </p>
-            </div>
-
-            {/* Actions */}
-            <div className="mt-9 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {/* CTAs IMMEDIATELY VISIBLE WITHOUT SCROLLING */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <button
                 type="button"
                 onClick={async () => {
@@ -650,14 +590,14 @@ export default function ProductDetail() {
                 disabled={
                   (selectedVariant && selectedVariant.stock === 0) || cartLoading
                 }
-                className="h-13 rounded-sm bg-[#17140F] px-6 py-4 text-sm font-medium text-[#FAFAF8] transition hover:bg-[#2B2620] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 py-3.5 px-5 text-sm font-medium text-white shadow-md shadow-slate-900/10 transition-all hover:bg-black active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {cartLoading
-                  ? "Adding..."
-                  : selectedVariant
-                  ? `Add Variant to Bag • ${formatPrice(selectedVariant.price || product.price)}`
-                  : `Add Main Product to Bag • ${formatPrice(product.price)}`}
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 11h14l1 12H4L5 11z" />
+                </svg>
+                {cartLoading ? "Adding..." : "Add to Bag"}
               </button>
+
               <button
                 type="button"
                 onClick={async () => {
@@ -674,14 +614,83 @@ export default function ProductDetail() {
                 disabled={
                   (selectedVariant && selectedVariant.stock === 0) || cartLoading
                 }
-                className="h-13 rounded-sm border border-[#17140F] px-6 py-4 text-sm font-medium text-[#17140F] transition hover:bg-[#17140F] hover:text-[#FAFAF8] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex items-center justify-center gap-2 rounded-xl border-2 border-slate-900 bg-white py-3.5 px-5 text-sm font-semibold text-slate-900 transition-all hover:bg-slate-900 hover:text-white active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {cartLoading ? "Processing..." : "Buy now"}
+                {cartLoading ? "Processing..." : "Buy Now"}
               </button>
             </div>
-          </section>
+
+
+            {/* Description & Details Accordion / Cards */}
+            <div className="mt-5 space-y-3">
+              <details className="group rounded-xl bg-stone-50 border border-stone-200/70 p-3.5 [&_summary::-webkit-details-marker]:hidden" open>
+                <summary className="flex cursor-pointer items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-800">
+                  <span>Description</span>
+                  <span className="transition group-open:rotate-180">
+                    <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </span>
+                </summary>
+                <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                  {product.description || "No description provided for this product."}
+                </p>
+              </details>
+
+              <details className="group rounded-xl bg-stone-50 border border-stone-200/70 p-3.5 [&_summary::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-800">
+                  <span>Product Specifications</span>
+                  <span className="transition group-open:rotate-180">
+                    <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </span>
+                </summary>
+                <div className="mt-2.5 space-y-1.5 text-xs text-slate-600">
+                  {selectedVariant ? (
+                    <>
+                      {Object.entries(selectedAttributes).map(([key, value]) => (
+                        <div key={key} className="flex justify-between border-b border-slate-200/50 pb-1">
+                          <span className="text-slate-500">{key}:</span>
+                          <span className="font-semibold text-slate-800">{value}</span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between pt-0.5">
+                        <span className="text-slate-500">Variant Price:</span>
+                        <span className="font-semibold text-slate-800">
+                          {formatPrice(selectedVariant.price || product.price)}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex justify-between border-b border-slate-200/50 pb-1">
+                        <span className="text-slate-500">Item Type:</span>
+                        <span className="font-semibold text-slate-800">Main Product (Base)</span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-200/50 pb-1">
+                        <span className="text-slate-500">Seller:</span>
+                        <span className="font-semibold text-slate-800">{product.seller || "Veyro Direct"}</span>
+                      </div>
+                      {product?.variants?.length > 0 && (
+                        <div className="flex justify-between pt-0.5">
+                          <span className="text-slate-500">Total Variants:</span>
+                          <span className="font-semibold text-slate-800">
+                            {product.variants.length} available
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </details>
+            </div>
+
+          </div>
+
         </div>
       </div>
     </main>
   );
 }
+

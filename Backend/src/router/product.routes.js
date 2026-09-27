@@ -6,10 +6,12 @@ import {
     getSellerProduct,
     getAllProduct,
     getProductDetail,
+    updateProduct,
+    deleteProduct,
     addProductVarient,
     updateVariant,
-    // updateVariantStock,
-    // deleteVariant
+    updateVariantStock,
+    deleteVariant
 } from "../controllers/product.controller.js"
 import { productValidator } from "../validator/product.validator.js";
 
@@ -27,11 +29,15 @@ router.post("/", authenticateSeller, upload.array('images', 7), productValidator
 
 router.get("/seller", authenticateSeller, getSellerProduct)
 
+// Seller main product update & delete endpoints
+router.put("/seller/product/:productId", authenticateSeller, upload.array('images', 7), updateProduct);
+router.delete("/seller/product/:productId", authenticateSeller, deleteProduct);
+
 // Seller variant endpoints
 router.post("/seller/product/:productId/variants", authenticateSeller, upload.array('images', 7), addProductVarient);
-// router.patch("/seller/product/:productId/variants/:variantId/stock", authenticateSeller, updateVariantStock);
+router.patch("/seller/product/:productId/variants/:variantId/stock", authenticateSeller, updateVariantStock);
 router.put("/seller/product/:productId/variants/:variantId", authenticateSeller, upload.array('images', 7), updateVariant);
-// router.delete("/seller/product/:productId/variants/:variantId", authenticateSeller, deleteVariant);
+router.delete("/seller/product/:productId/variants/:variantId", authenticateSeller, deleteVariant);
 
 
 

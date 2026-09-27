@@ -32,16 +32,25 @@ export const createPendingPaymentController = async (req, res) => {
         // Transform cart items
         const orderItems = await Promise.all(cartData.items.map(async (item) => {
             const product = await productModel.findById(item.product?._id || item.product);
+            const rawImages = product?.images || [];
+            const processedImages = rawImages.map(img => {
+                if (typeof img === "string") return { url: img };
+                if (img?.url) return { url: img.url };
+                return { url: "" };
+            }).filter(i => i.url);
+
             return {
                 tittle: product?.tittle || "Unknown Product",
                 productId: item.product?._id || item.product,
                 variantId: item.variant || null,
                 quantity: item.quantity,
-                images: (product?.images || []).map(img => ({ url: img })),
+                images: processedImages,
                 price: {
                     amount: item.price?.amount || 0,
                     currency: item.price?.currency || cartData.currency || "INR"
-                }
+                },
+                seller: product?.seller || null,
+                orderStatus: "Confirmed"
             };
         }));
 
@@ -120,8 +129,6 @@ export const verifyPaymentController = async (req, res) => {
                 .digest('hex');
 
             console.log('Verifying Razorpay signature...');
-            console.log('Expected:', expectedSignature);
-            console.log('Received:', razorpay_signature);
 
             if (expectedSignature !== razorpay_signature) {
                 console.error('Invalid Razorpay signature - possible fraud attempt!');
@@ -145,9 +152,6 @@ export const verifyPaymentController = async (req, res) => {
 
         console.log('Payment updated:', existingPayment._id, 'Status:', existingPayment.status);
 
-        // Cart clearing is now handled manually by frontend
-        // Removed automatic cart clearing
-
         return res.status(200).json({
             message: `Payment ${existingPayment.status} successfully`,
             success: true,
@@ -156,12 +160,10 @@ export const verifyPaymentController = async (req, res) => {
 
     } catch (error) {
         console.error("Error in verifyPaymentController:", error);
-        console.error("Stack trace:", error.stack);
         return res.status(500).json({
             message: "Failed to verify payment",
             success: false,
-            error: error.message,
-            details: error.stack
+            error: error.message
         });
     }
 }
@@ -244,3 +246,159 @@ export const getUserPaymentsController = async (req, res) => {
         })
     }
 }
+
+// Fetch orders containing products owned by the logged-in seller ONLY
+export const getSellerOrdersController = async (req, res) => {
+    try {
+        const sellerId = req.user._id;
+
+        // 1. Find all product IDs owned by this seller
+        const sellerProducts = await productModel.find({ seller: sellerId }).select("_id tittle images price");
+        const sellerProductIds = sellerProducts.map(p => p._id.toString());
+
+        if (sellerProductIds.length === 0) {
+            return res.status(200).json({
+                message: "No products or orders found for this seller",
+                success: true,
+                orders: []
+            });
+        }
+
+        // 2. Query payments containing products belonging to this seller
+        const payments = await paymentModel.find({
+            status: { $in: ["paid", "pending"] },
+            $or: [
+                { "orderitems.productId": { $in: sellerProductIds } },
+                { "orderitems.seller": sellerId }
+            ]
+        }).populate("user", "name email").sort({ _id: -1 });
+
+        // 3. Extract items belonging ONLY to this seller
+        const sellerOrders = [];
+
+        payments.forEach(payment => {
+            (payment.orderitems || []).forEach(item => {
+                const itemProdId = item.productId ? item.productId.toString() : "";
+                const itemSellerId = item.seller ? item.seller.toString() : "";
+
+                if (sellerProductIds.includes(itemProdId) || itemSellerId === sellerId.toString()) {
+                    const matchedProduct = sellerProducts.find(p => p._id.toString() === itemProdId);
+                    
+                    let primaryImage = item.images?.[0]?.url || item.images?.[0] || "";
+                    if (!primaryImage && matchedProduct?.images?.[0]) {
+                        const raw = matchedProduct.images[0];
+                        primaryImage = typeof raw === "string" ? raw : raw?.url || "";
+                    }
+
+                    sellerOrders.push({
+                        paymentId: payment._id,
+                        orderId: payment._id,
+                        razorpayOrderId: payment.razorpay?.orderId || "N/A",
+                        razorpayPaymentId: payment.razorpay?.paymentId || "N/A",
+                        paymentStatus: payment.status,
+                        orderStatus: item.orderStatus || "Confirmed",
+                        item: {
+                            tittle: item.tittle || matchedProduct?.tittle || "Product Item",
+                            productId: item.productId,
+                            variantId: item.variantId || null,
+                            quantity: item.quantity || 1,
+                            price: item.price || matchedProduct?.price || { amount: 0, currency: "INR" },
+                            image: primaryImage
+                        },
+                        buyer: {
+                            name: payment.user?.name || "Customer",
+                            email: payment.user?.email || "N/A"
+                        },
+                        createdAt: payment.createdAt || (payment._id.getTimestamp ? payment._id.getTimestamp() : new Date())
+                    });
+                }
+            });
+        });
+
+        return res.status(200).json({
+            message: "Seller orders fetched successfully",
+            success: true,
+            orders: sellerOrders
+        });
+
+    } catch (error) {
+        console.error("Error in getSellerOrdersController:", error);
+        return res.status(500).json({
+            message: "Failed to fetch seller orders",
+            success: false,
+            error: error.message
+        });
+    }
+};
+
+// Update order status (Confirmed, Shipped, Delivered, Cancelled) for seller's own product
+export const updateSellerOrderStatusController = async (req, res) => {
+    try {
+        const sellerId = req.user._id;
+        const { paymentId, productId, orderStatus } = req.body;
+
+        if (!paymentId || !productId || !orderStatus) {
+            return res.status(400).json({
+                message: "paymentId, productId, and orderStatus are required",
+                success: false
+            });
+        }
+
+        const validStatuses = ["Confirmed", "Shipped", "Delivered", "Cancelled"];
+        if (!validStatuses.includes(orderStatus)) {
+            return res.status(400).json({
+                message: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
+                success: false
+            });
+        }
+
+        // Security Check: Verify product belongs to the seller requesting the update
+        const product = await productModel.findOne({ _id: productId, seller: sellerId });
+        if (!product) {
+            return res.status(403).json({
+                message: "Unauthorized: You can only manage orders for products you own",
+                success: false
+            });
+        }
+
+        const payment = await paymentModel.findById(paymentId);
+        if (!payment) {
+            return res.status(404).json({
+                message: "Order record not found",
+                success: false
+            });
+        }
+
+        let updated = false;
+        payment.orderitems.forEach(item => {
+            if (item.productId && item.productId.toString() === productId.toString()) {
+                item.orderStatus = orderStatus;
+                updated = true;
+            }
+        });
+
+        if (!updated) {
+            return res.status(404).json({
+                message: "Product item not found in this order",
+                success: false
+            });
+        }
+
+        await payment.save();
+
+        return res.status(200).json({
+            message: `Order status updated to ${orderStatus}`,
+            success: true,
+            orderStatus
+        });
+
+    } catch (error) {
+        console.error("Error in updateSellerOrderStatusController:", error);
+        return res.status(500).json({
+            message: "Failed to update order status",
+            success: false,
+            error: error.message
+        });
+    }
+};
+

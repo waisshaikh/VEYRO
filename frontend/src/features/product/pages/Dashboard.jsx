@@ -69,12 +69,21 @@ const Dashboard = () => {
             Back to Home
           </Link>
 
-          <Link
-            to="/seller/create-product"
-            className="rounded-full bg-teal-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-teal-700"
-          >
-            Add Product
-          </Link>
+          <div className="flex items-center gap-2.5">
+            <Link
+              to="/seller/orders"
+              className="rounded-full border border-teal-600 bg-teal-50/50 px-4 py-2 text-xs font-bold text-teal-800 transition hover:bg-teal-100 flex items-center gap-1.5"
+            >
+              <span>📦 View Customer Orders</span>
+            </Link>
+
+            <Link
+              to="/seller/create-product"
+              className="rounded-full bg-teal-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-teal-700"
+            >
+              + Add Product
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -88,13 +97,13 @@ const Dashboard = () => {
               Product Dashboard
             </h1>
             <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
-              Manage the products published from your seller account.
+              Manage the products published from your seller account and track customer orders.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:min-w-[260px]">
+          <div className="grid grid-cols-3 gap-2 sm:min-w-[360px]">
             <div className="rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Products
               </p>
               <p className="mt-1 text-xl font-black text-slate-950">
@@ -102,13 +111,24 @@ const Dashboard = () => {
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Stock Value
               </p>
               <p className="mt-1 text-xl font-black text-teal-700">
                 ₹{totalValue.toLocaleString("en-IN")}
               </p>
             </div>
+            <Link
+              to="/seller/orders"
+              className="rounded-lg border border-teal-200 bg-teal-50/60 p-2.5 shadow-sm hover:bg-teal-100/80 transition"
+            >
+              <p className="text-[10px] font-bold uppercase tracking-wider text-teal-800">
+                Orders →
+              </p>
+              <p className="mt-1 text-xs font-bold text-teal-900">
+                Manage Dispatch
+              </p>
+            </Link>
           </div>
         </div>
 

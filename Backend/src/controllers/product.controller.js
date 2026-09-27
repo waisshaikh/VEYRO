@@ -85,12 +85,125 @@ export async function getProductDetail(req, res) {
 
 
 export async function getAllProduct(req, res) {
-    const products = await productModel.find()
-    res.status(200).json({
-        message: "All product fetched",
-        success: true,
-        products
-    })
+    try {
+        const { search } = req.query;
+        let query = {};
+        if (search && search.trim()) {
+            const regex = new RegExp(search.trim(), "i");
+            query = {
+                $or: [
+                    { tittle: regex },
+                    { description: regex }
+                ]
+            };
+        }
+        const products = await productModel.find(query).sort({ _id: -1 });
+        res.status(200).json({
+            message: "All product fetched",
+            success: true,
+            products
+        });
+    } catch (error) {
+        console.error("Get all products error:", error);
+        res.status(500).json({ success: false, message: "Failed to fetch products", error: error.message });
+    }
+}
+
+// ── Main Product Edit & Delete Handlers ─────────────────────────────────────
+
+export async function updateProduct(req, res) {
+    try {
+        const { productId } = req.params;
+        const { tittle, title, description, priceAmount, priceCurrency, existingImages } = req.body;
+        const sellerId = req.user?._id;
+
+        const product = await productModel.findOne({ _id: productId, seller: sellerId });
+        if (!product) {
+            return res.status(404).json({ success: false, message: "Product not found or unauthorized" });
+        }
+
+        const newTitle = tittle || title;
+        if (newTitle) {
+            product.tittle = newTitle;
+        }
+        if (description !== undefined) {
+            product.description = description;
+        }
+        if (priceAmount !== undefined) {
+            if (!product.price) product.price = {};
+            product.price.amount = Number(priceAmount);
+        }
+        if (priceCurrency) {
+            if (!product.price) product.price = {};
+            product.price.currency = priceCurrency;
+        }
+
+        // Handle image updates
+        let uploadedImages = [];
+        if (req.files && req.files.length > 0) {
+            uploadedImages = await Promise.all(
+                req.files.map(async (file) => {
+                    return await uploadFile({
+                        buffer: file.buffer,
+                        fileName: file.originalname,
+                        mimeType: file.mimetype
+                    });
+                })
+            );
+        }
+
+        let existingList = [];
+        if (existingImages !== undefined) {
+            try {
+                const parsed = typeof existingImages === "string" ? JSON.parse(existingImages) : existingImages;
+                if (Array.isArray(parsed)) {
+                    existingList = parsed.filter(img => typeof img === "string" && img.trim().length > 0);
+                }
+            } catch (e) {
+                if (typeof existingImages === "string" && existingImages.trim().startsWith("http")) {
+                    existingList = [existingImages.trim()];
+                }
+            }
+        } else {
+            existingList = product.images || [];
+        }
+
+        const combinedImages = [...existingList, ...uploadedImages];
+        if (combinedImages.length > 0) {
+            product.images = combinedImages;
+        }
+
+        await product.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Product updated successfully",
+            product
+        });
+    } catch (error) {
+        console.error("Update product error:", error);
+        res.status(500).json({ success: false, message: "Failed to update product", error: error.message });
+    }
+}
+
+export async function deleteProduct(req, res) {
+    try {
+        const { productId } = req.params;
+        const sellerId = req.user?._id;
+
+        const product = await productModel.findOneAndDelete({ _id: productId, seller: sellerId });
+        if (!product) {
+            return res.status(404).json({ success: false, message: "Product not found or unauthorized" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Product deleted successfully"
+        });
+    } catch (error) {
+        console.error("Delete product error:", error);
+        res.status(500).json({ success: false, message: "Failed to delete product", error: error.message });
+    }
 }
 
 // ── Variant Management Handlers ─────────────────────────────────────────────                                                                         
@@ -250,36 +363,36 @@ export async function addProductVarient(req, res) {
 //     }
 // }
 
-// export async function updateVariantStock(req, res) {
-//     try {
-//         const { productId, variantId } = req.params;
-//         const { stock } = req.body;
-//         const sellerId = req.user?._id;
+export async function updateVariantStock(req, res) {
+    try {
+        const { productId, variantId } = req.params;
+        const { stock } = req.body;
+        const sellerId = req.user?._id;
 
-//         const product = await productModel.findOne({ _id: productId, seller: sellerId });
-//         if (!product) {
-//             return res.status(404).json({ success: false, message: "Product not found or unauthorized" });
-//         }
+        const product = await productModel.findOne({ _id: productId, seller: sellerId });
+        if (!product) {
+            return res.status(404).json({ success: false, message: "Product not found or unauthorized" });
+        }
 
-//         const variant = product.variants.id(variantId);
-//         if (!variant) {
-//             return res.status(404).json({ success: false, message: "Variant not found" });
-//         }
+        const variant = product.variants.id(variantId);
+        if (!variant) {
+            return res.status(404).json({ success: false, message: "Variant not found" });
+        }
 
-//         variant.stock = Math.max(0, Number(stock) || 0);
-//         await product.save();
+        variant.stock = Math.max(0, Number(stock) || 0);
+        await product.save();
 
-//         res.status(200).json({
-//             success: true,
-//             message: "Stock updated successfully",
-//             variant,
-//             product
-//         });
-//     } catch (error) {
-//         console.error("Update variant stock error:", error);
-//         res.status(500).json({ success: false, message: "Failed to update stock", error: error.message });
-//     }
-// }
+        res.status(200).json({
+            success: true,
+            message: "Stock updated successfully",
+            variant,
+            product
+        });
+    } catch (error) {
+        console.error("Update variant stock error:", error);
+        res.status(500).json({ success: false, message: "Failed to update stock", error: error.message });
+    }
+}
 
 export async function updateVariant(req, res) {
     try {
@@ -295,6 +408,10 @@ export async function updateVariant(req, res) {
         const variant = product.variants.id(variantId);
         if (!variant) {
             return res.status(404).json({ success: false, message: "Variant not found" });
+        }
+
+        if (!variant.price) {
+            variant.price = { amount: 0, currency: "INR" };
         }
 
         if (priceAmount !== undefined) {
@@ -369,26 +486,26 @@ export async function updateVariant(req, res) {
     }
 }
 
-// export async function deleteVariant(req, res) {
-//     try {
-//         const { productId, variantId } = req.params;
-//         const sellerId = req.user?._id;
+export async function deleteVariant(req, res) {
+    try {
+        const { productId, variantId } = req.params;
+        const sellerId = req.user?._id;
 
-//         const product = await productModel.findOne({ _id: productId, seller: sellerId });
-//         if (!product) {
-//             return res.status(404).json({ success: false, message: "Product not found or unauthorized" });
-//         }
+        const product = await productModel.findOne({ _id: productId, seller: sellerId });
+        if (!product) {
+            return res.status(404).json({ success: false, message: "Product not found or unauthorized" });
+        }
 
-//         product.variants.pull({ _id: variantId });
-//         await product.save();
+        product.variants.pull({ _id: variantId });
+        await product.save();
 
-//         res.status(200).json({
-//             success: true,
-//             message: "Variant deleted successfully",
-//             product
-//         });
-//     } catch (error) {
-//         console.error("Delete variant error:", error);
-//         res.status(500).json({ success: false, message: "Failed to delete variant", error: error.message });
-//     }
-// }
+        res.status(200).json({
+            success: true,
+            message: "Variant deleted successfully",
+            product
+        });
+    } catch (error) {
+        console.error("Delete variant error:", error);
+        res.status(500).json({ success: false, message: "Failed to delete variant", error: error.message });
+    }
+}

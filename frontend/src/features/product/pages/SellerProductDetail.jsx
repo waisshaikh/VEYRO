@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
-import { useParams, Link } from "react-router";
+import { useParams, Link, useNavigate } from "react-router";
 import { useProduct } from "../hook/useProduct";
 
 const CURRENCIES = [
@@ -18,6 +18,7 @@ const PRESET_ATTRIBUTES = [
 
 const SellerProductDetail = () => {
   const { productId } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -26,6 +27,8 @@ const SellerProductDetail = () => {
   const {
     handleGetProductByid,
     handleGetSellerproduct,
+    handleUpdateProduct,
+    handleDeleteProduct,
     handleAddVariant,
     handleUpdateVariant,
     handleUpdateVariantStock,
@@ -40,6 +43,25 @@ const SellerProductDetail = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingVariant, setEditingVariant] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+
+  // Main product edit & delete states
+  const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
+  const [isDeleteProductConfirmOpen, setIsDeleteProductConfirmOpen] = useState(false);
+  const [deletingProduct, setDeletingProduct] = useState(false);
+
+  const handleDeleteProductConfirm = async () => {
+    try {
+      setDeletingProduct(true);
+      await handleDeleteProduct(productId);
+      showToast("Product deleted successfully");
+      navigate("/seller/dashboard");
+    } catch (error) {
+      console.error("Failed to delete product", error);
+      showToast(error?.response?.data?.message || "Failed to delete product", "error");
+      setDeletingProduct(false);
+      setIsDeleteProductConfirmOpen(false);
+    }
+  };
 
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState("");
@@ -344,7 +366,7 @@ const SellerProductDetail = () => {
                       <img
                         src={product.images[activeImageIndex] || product.images[0]}
                         alt={product.tittle || "Product image"}
-                        className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                        className="w-full h-full object-contain p-2 transition-transform duration-700 group-hover:scale-105"
                       />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 p-6 text-center">
@@ -386,15 +408,41 @@ const SellerProductDetail = () => {
                 {/* Right: Product Narrative & Master Metrics (7 cols) */}
                 <div className="lg:col-span-7 flex flex-col justify-between space-y-8">
                   <div className="space-y-4">
-                    {/* Header Chips */}
-                    <div className="flex flex-wrap items-center gap-3 text-xs">
-                      <span className="font-mono text-[11px] text-slate-400 tracking-widest">
-                        ID: #{product._id?.slice(-8).toUpperCase()}
-                      </span>
-                      <span className="text-slate-300">•</span>
-                      <span className="text-[11px] uppercase tracking-widest text-teal-700 font-semibold">
-                        Master Product Record
-                      </span>
+                    {/* Header Chips & Master Actions */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-[11px] text-slate-400 tracking-widest">
+                          ID: #{product._id?.slice(-8).toUpperCase()}
+                        </span>
+                        <span className="text-slate-300">•</span>
+                        <span className="text-[11px] uppercase tracking-widest text-teal-700 font-semibold">
+                          Master Product Record
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setIsEditProductModalOpen(true)}
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-700 hover:text-teal-700 bg-slate-100 hover:bg-teal-50 border border-slate-200 hover:border-teal-300 px-3 py-1.5 rounded-lg transition-all shadow-xs"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          <span>Edit Product</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setIsDeleteProductConfirmOpen(true)}
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3 py-1.5 rounded-lg transition-all shadow-xs"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          <span>Delete</span>
+                        </button>
+                      </div>
                     </div>
 
                     {/* Main Title */}
@@ -878,6 +926,65 @@ const SellerProductDetail = () => {
         />
       )}
 
+      {/* ── Modal: Edit Main Product ──────────────────────────────────────── */}
+      {isEditProductModalOpen && (
+        <ProductEditModal
+          isOpen={isEditProductModalOpen}
+          product={product}
+          onClose={() => setIsEditProductModalOpen(false)}
+          onSuccess={(updatedProduct) => {
+            setIsEditProductModalOpen(false);
+            if (updatedProduct) {
+              setProduct(updatedProduct);
+            } else {
+              fetchProductsDetails();
+            }
+            showToast("Master product details updated!");
+          }}
+          handleUpdateProduct={handleUpdateProduct}
+        />
+      )}
+
+      {/* ── Modal: Delete Master Product Confirmation ──────────────────────── */}
+      {isDeleteProductConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-rose-600">
+              <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center border border-rose-200">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-serif font-bold text-slate-900">Delete Product</h3>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Are you sure you want to delete <strong className="text-slate-900">{product?.tittle}</strong>? This action will permanently remove the master product record and all associated variants.
+            </p>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsDeleteProductConfirmOpen(false)}
+                disabled={deletingProduct}
+                className="px-4 py-2 text-xs uppercase tracking-widest text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteProductConfirm}
+                disabled={deletingProduct}
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-widest rounded-lg shadow-xs flex items-center gap-2"
+              >
+                {deletingProduct && (
+                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                )}
+                <span>Confirm Delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Footer ────────────────────────────────────────────────────────── */}
       <footer className="mt-auto border-t border-slate-200 bg-white py-8 text-center text-xs uppercase tracking-widest text-slate-400">
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -885,6 +992,299 @@ const SellerProductDetail = () => {
           <span>© 2026 VEYRO LUXE INTERNATIONALE • ALL RIGHTS RESERVED</span>
         </div>
       </footer>
+    </div>
+  );
+};
+
+// ── Master Product Edit Modal ───────────────────────────────────────────────
+const ProductEditModal = ({
+  isOpen,
+  product,
+  onClose,
+  onSuccess,
+  handleUpdateProduct,
+}) => {
+  if (!isOpen || !product) return null;
+
+  const fileInputRef = useRef(null);
+  const [title, setTitle] = useState(product?.tittle || "");
+  const [description, setDescription] = useState(product?.description || "");
+  const [amount, setAmount] = useState(product?.price?.amount || "");
+  const [currency, setCurrency] = useState(product?.price?.currency || "INR");
+
+  const [existingImages, setExistingImages] = useState(product?.images || []);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [filePreviews, setFilePreviews] = useState([]);
+  const [imageError, setImageError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  const totalImagesCount = existingImages.length + selectedFiles.length;
+
+  useEffect(() => {
+    return () => {
+      filePreviews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [filePreviews]);
+
+  const handleFilesAdded = (files) => {
+    if (!files || !files.length) return;
+    setImageError("");
+
+    const newFiles = Array.from(files);
+    const validImageFiles = newFiles.filter((file) => file.type.startsWith("image/"));
+
+    if (validImageFiles.length === 0) {
+      setImageError("Please upload valid image files (PNG, JPG, WEBP).");
+      return;
+    }
+
+    const remainingAllowed = 7 - (existingImages.length + selectedFiles.length);
+    if (remainingAllowed <= 0) {
+      setImageError("Maximum 7 images allowed.");
+      return;
+    }
+
+    const filesToAdd = validImageFiles.slice(0, remainingAllowed);
+    const newPreviews = filesToAdd.map((file) => URL.createObjectURL(file));
+
+    setSelectedFiles((prev) => [...prev, ...filesToAdd]);
+    setFilePreviews((prev) => [...prev, ...newPreviews]);
+  };
+
+  const handleRemoveExistingImage = (index) => {
+    setExistingImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveSelectedFile = (index) => {
+    if (filePreviews[index]) {
+      URL.revokeObjectURL(filePreviews[index]);
+    }
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    setFilePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setFormError("");
+
+    if (!title.trim()) {
+      setFormError("Product title is required.");
+      return;
+    }
+    if (!amount || isNaN(amount) || Number(amount) <= 0) {
+      setFormError("Please provide a valid price amount.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("tittle", title.trim());
+    formData.append("description", description.trim());
+    formData.append("priceAmount", Number(amount));
+    formData.append("priceCurrency", currency);
+    formData.append("existingImages", JSON.stringify(existingImages));
+
+    selectedFiles.forEach((file) => {
+      formData.append("images", file);
+    });
+
+    try {
+      setSubmitting(true);
+      const res = await handleUpdateProduct(product._id, formData);
+      onSuccess(res?.product);
+    } catch (err) {
+      console.error("Product update submit error:", err);
+      setFormError(
+        err?.response?.data?.message || err?.message || "Failed to update product."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-xl p-6 sm:p-8 shadow-2xl relative max-h-[92vh] flex flex-col text-slate-900">
+        <div className="flex items-center justify-between pb-5 border-b border-slate-100">
+          <div>
+            <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-teal-700">
+              Master Product Settings
+            </span>
+            <h3 className="text-xl sm:text-2xl font-serif text-slate-950 font-semibold mt-0.5">
+              Edit Master Product
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 hover:bg-slate-200 flex items-center justify-center transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto py-6 space-y-5 pr-1">
+          {formError && (
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">
+              {formError}
+            </div>
+          )}
+
+          {/* Title */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] uppercase tracking-widest text-slate-500 block font-semibold">
+              Product Title *
+            </label>
+            <input
+              type="text"
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Silk Kurti Set"
+              className="w-full bg-slate-50 border border-slate-200 focus:border-teal-600 focus:bg-white text-sm text-slate-900 px-3.5 py-2.5 rounded-lg focus:outline-none transition-colors shadow-xs font-medium"
+            />
+          </div>
+
+          {/* Pricing Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] uppercase tracking-widest text-slate-500 block font-semibold">
+                Base Price *
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                required
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="700"
+                className="w-full bg-slate-50 border border-slate-200 focus:border-teal-600 focus:bg-white text-sm text-slate-900 px-3.5 py-2.5 rounded-lg focus:outline-none transition-colors shadow-xs"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] uppercase tracking-widest text-slate-500 block font-semibold">
+                Currency
+              </label>
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 focus:border-teal-600 focus:bg-white text-sm text-slate-900 px-3 py-2.5 rounded-lg focus:outline-none transition-colors shadow-xs"
+              >
+                {CURRENCIES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.code} ({c.symbol})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] uppercase tracking-widest text-slate-500 block font-semibold">
+              Description
+            </label>
+            <textarea
+              rows={4}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Detailed description of the garment..."
+              className="w-full bg-slate-50 border border-slate-200 focus:border-teal-600 focus:bg-white text-sm text-slate-900 px-3.5 py-2.5 rounded-lg focus:outline-none transition-colors shadow-xs resize-y"
+            />
+          </div>
+
+          {/* Images Upload */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">
+                Master Product Gallery (Max 7)
+              </label>
+              <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                {totalImagesCount} / 7
+              </span>
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/jpg,image/webp"
+              multiple
+              onChange={(e) => {
+                handleFilesAdded(e.target.files);
+                e.target.value = "";
+              }}
+              className="hidden"
+            />
+
+            {totalImagesCount < 7 && (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-slate-300 hover:border-teal-500 bg-slate-50/60 p-4 text-center cursor-pointer rounded-xl transition-all"
+              >
+                <p className="text-xs text-slate-700 font-medium">+ Click to upload new product photos</p>
+                <p className="text-[10px] text-slate-400">PNG, JPG, WEBP up to 5MB each</p>
+              </div>
+            )}
+
+            {imageError && (
+              <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5">
+                {imageError}
+              </p>
+            )}
+
+            {totalImagesCount > 0 && (
+              <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+                {existingImages.map((url, i) => (
+                  <div key={`exist-${i}`} className="relative aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-100 group">
+                    <img src={url} alt={`Existing ${i}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveExistingImage(i)}
+                      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-slate-900/80 hover:bg-rose-600 text-white flex items-center justify-center text-[10px]"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+                {filePreviews.map((url, i) => (
+                  <div key={`new-${i}`} className="relative aspect-square rounded-lg overflow-hidden border-2 border-teal-500 bg-slate-100 group">
+                    <img src={url} alt={`New ${i}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSelectedFile(i)}
+                      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-slate-900/80 hover:bg-rose-600 text-white flex items-center justify-center text-[10px]"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={submitting}
+              className="px-5 py-2.5 text-xs uppercase tracking-widest text-slate-500 hover:text-slate-900 border border-slate-200 hover:bg-slate-100 rounded-lg transition-colors font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-7 py-2.5 text-xs font-bold uppercase tracking-widest bg-teal-600 text-white hover:bg-teal-700 rounded-lg shadow-sm hover:shadow transition-all flex items-center gap-2"
+            >
+              {submitting && (
+                <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              )}
+              <span>Save Master Product</span>
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

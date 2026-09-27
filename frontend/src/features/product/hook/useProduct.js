@@ -3,6 +3,8 @@ import {
     getProductById,
     getSellerProduct,
     gettAllProducte,
+    updateProductApi,
+    deleteProductApi,
     addProductVarient,
     updateVariantStockApi,
     updateVariantApi,
@@ -36,6 +38,16 @@ export const useProduct = () => {
         return data.product
     }
 
+    async function handleUpdateProduct(productId, formData) {
+        const data = await updateProductApi(productId, formData);
+        return data;
+    }
+
+    async function handleDeleteProduct(productId) {
+        const data = await deleteProductApi(productId);
+        return data;
+    }
+
     async function handleAddVariant(productId, formData) {
         const data = await addProductVarient(productId, formData);
         return data;
@@ -61,6 +73,8 @@ export const useProduct = () => {
         handleGetSellerproduct,
         handelGetProduct,
         handleGetProductByid,
+        handleUpdateProduct,
+        handleDeleteProduct,
         handleAddVariant,
         handleUpdateVariantStock,
         handleUpdateVariant,

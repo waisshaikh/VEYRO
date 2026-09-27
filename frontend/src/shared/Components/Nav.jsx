@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useNavigate, useLocation } from "react-router";
+import { Link, useNavigate, useLocation, useSearchParams } from "react-router";
 import { useSelector } from "react-redux";
 import { useAuth } from "../../features/auth/hook/useAuth.js";
 
 const Nav = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, token, isAuthenticated, handleLogout } = useAuth();
   const isUserLoggedIn = Boolean(user || token || isAuthenticated);
   const cartItems = useSelector((state) => state.cart?.items || []);
@@ -13,9 +14,25 @@ const Nav = () => {
     ? cartItems.reduce((total, item) => total + (item.quantity || 1), 0)
     : 0;
 
+  const currentSearch = searchParams.get("search") || "";
+  const [navSearch, setNavSearch] = useState(currentSearch);
+
+  useEffect(() => {
+    setNavSearch(currentSearch);
+  }, [currentSearch]);
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  const handleNavSearchSubmit = (e) => {
+    e.preventDefault();
+    if (navSearch.trim()) {
+      navigate(`/?search=${encodeURIComponent(navSearch.trim())}`);
+    } else {
+      navigate("/");
+    }
+  };
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -73,7 +90,7 @@ const Nav = () => {
                 <Link
                   to="/seller/dashboard"
                   className={`flex items-center gap-1.5 transition hover:text-slate-950 ${
-                    location.pathname.startsWith("/seller/dashboard")
+                    location.pathname === "/seller/dashboard"
                       ? "font-semibold text-slate-950"
                       : ""
                   }`}
@@ -82,6 +99,17 @@ const Nav = () => {
                   <span className="rounded bg-teal-50 px-1.5 py-0.5 text-[10px] font-bold text-teal-700 uppercase">
                     Seller
                   </span>
+                </Link>
+
+                <Link
+                  to="/seller/orders"
+                  className={`flex items-center gap-1 transition hover:text-slate-950 ${
+                    location.pathname === "/seller/orders"
+                      ? "font-semibold text-slate-950"
+                      : ""
+                  }`}
+                >
+                  <span>Orders</span>
                 </Link>
 
                 <Link
@@ -98,6 +126,49 @@ const Nav = () => {
             )}
           </nav>
         </div>
+
+        {/* Center: Sleek Navbar Search Input */}
+        <form onSubmit={handleNavSearchSubmit} className="hidden sm:flex items-center flex-1 max-w-xs md:max-w-md mx-6">
+          <div className="relative flex items-center w-full">
+            <input
+              type="text"
+              placeholder="Search products, sizes, colors..."
+              value={navSearch}
+              onChange={(e) => {
+                const val = e.target.value;
+                setNavSearch(val);
+                if (location.pathname === "/") {
+                  if (val.trim()) {
+                    setSearchParams({ search: val.trim() });
+                  } else {
+                    setSearchParams({});
+                  }
+                }
+              }}
+              className="w-full bg-slate-100/90 focus:bg-white border border-slate-200 focus:border-amber-500 rounded-full py-2 pl-9 pr-8 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 transition-all shadow-2xs"
+            />
+            <svg className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            {navSearch && (
+              <button
+                type="button"
+                onClick={() => {
+                  setNavSearch("");
+                  if (location.pathname === "/") {
+                    setSearchParams({});
+                  } else {
+                    navigate("/");
+                  }
+                }}
+                className="absolute right-3 text-slate-400 hover:text-slate-700 text-xs font-bold transition-colors"
+                title="Clear search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </form>
 
         {/* Right: Actions (Cart, User, Auth) */}
         <div className="flex items-center gap-3 sm:gap-4">
@@ -208,6 +279,12 @@ const Nav = () => {
                           className="block px-4 py-2 text-xs font-medium text-teal-700 hover:bg-teal-50"
                         >
                           Seller Dashboard
+                        </Link>
+                        <Link
+                          to="/seller/orders"
+                          className="block px-4 py-2 text-xs font-medium text-teal-700 hover:bg-teal-50"
+                        >
+                          Customer Orders
                         </Link>
                         <Link
                           to="/seller/create-product"
@@ -323,6 +400,12 @@ const Nav = () => {
                   className="block py-1.5 text-sm font-medium text-teal-700"
                 >
                   Dashboard
+                </Link>
+                <Link
+                  to="/seller/orders"
+                  className="block py-1.5 text-sm font-medium text-teal-700"
+                >
+                  Customer Orders
                 </Link>
                 <Link
                   to="/seller/create-product"
