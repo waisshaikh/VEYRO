@@ -4,7 +4,16 @@ import { API_BASE_URL } from "../../../config/api.js";
 const authApiInstance = axios.create({
   baseURL: `${API_BASE_URL}/auth`,
   withCredentials: true,
-})
+});
+
+// Add Authorization header to all requests
+authApiInstance.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 
 export async function register({ email, contact, password, fullname, isSeller }) {

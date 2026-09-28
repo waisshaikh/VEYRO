@@ -88,15 +88,11 @@ export const loginController = async (req, res) => {
 }
 
 
-// Get current logged-in user from JWT cookie
+// Get current logged-in user (from token in cookie or Authorization header)
 export const meController = async (req, res) => {
     try {
-        const token = req.cookies?.token;
-        if (!token) return res.status(401).json({ message: "Not authenticated" });
-
-        const decoded = jwt.verify(token, config.JWT_SECRET);
-        const user = await Usermodel.findById(decoded.id).select("-password");
-        if (!user) return res.status(401).json({ message: "User not found" });
+        const user = req.user;
+        if (!user) return res.status(401).json({ message: "Not authenticated" });
 
         return res.status(200).json({
             success: true,

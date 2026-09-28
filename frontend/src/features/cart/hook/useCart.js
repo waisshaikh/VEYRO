@@ -30,6 +30,13 @@ export const useCart = () => {
 
   // Add item to cart
   async function handleAddToCart(productId, variantId, quantity = 1) {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token) {
+      const message = "Please log in to continue";
+      dispatch(setError(message));
+      return { success: false, error: message, isAuthError: true };
+    }
+
     try {
       dispatch(setLoading(true));
       dispatch(clearError());
@@ -41,12 +48,12 @@ export const useCart = () => {
       dispatch(setSuccessMessage("Item added to cart successfully!"));
       return { success: true, data };
     } catch (err) {
-      const message =
-        err.response?.data?.message ||
-        err.message ||
-        "Failed to add item to cart";
+      const isAuthError = err.response?.status === 401 || err.status === 401;
+      const message = isAuthError
+        ? "Please log in to continue"
+        : (err.response?.data?.message || err.message || "Failed to add item to cart");
       dispatch(setError(message));
-      return { success: false, error: message };
+      return { success: false, error: message, isAuthError };
     } finally {
       dispatch(setLoading(false));
     }

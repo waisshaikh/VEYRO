@@ -50,6 +50,11 @@ export const useAuth = () => {
   }
 
   async function handleGetMe() {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token) {
+      dispatch(setUser(null));
+      return;
+    }
     try {
       dispatch(setLoading(true));
       const data = await getMe();

@@ -41,6 +41,42 @@ export default function ProductDetail() {
   const [error, setError] = useState("");
   const [selectedAttributes, setSelectedAttributes] = useState({});
   const [quantity, setQuantity] = useState(1); // Store selected attribute values
+  const [flashNotification, setFlashNotification] = useState(null);
+
+  useEffect(() => {
+    if (flashNotification) {
+      const timer = setTimeout(() => {
+        setFlashNotification(null);
+      }, 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [flashNotification]);
+
+  const onAddToCartAction = async (isBuyNow = false) => {
+    const variantId = selectedVariant ? selectedVariant._id : null;
+    const result = await handleAddToCart(productId, variantId, quantity);
+    if (result.success) {
+      if (isBuyNow) {
+        navigate("/cart");
+      } else {
+        setFlashNotification({
+          type: "success",
+          message: "Item added to bag successfully!",
+          isAuth: false,
+        });
+      }
+    } else {
+      const isAuthErr =
+        result.isAuthError ||
+        result.error?.toLowerCase().includes("login") ||
+        result.error?.toLowerCase().includes("unauthorized");
+      setFlashNotification({
+        type: "error",
+        message: isAuthErr ? "Please log in to continue" : (result.error || "Failed to add item to bag"),
+        isAuth: isAuthErr,
+      });
+    }
+  };
 
   // Helper to convert attributes to object
   const getAttributesObject = (attrs) => {
@@ -283,7 +319,75 @@ export default function ProductDetail() {
   ───────────────────────────────────────────── */
 
   return (
-    <main className="min-h-screen bg-[#FBFBF9] text-slate-800">
+    <main className="relative min-h-screen bg-[#FBFBF9] text-slate-800">
+      {/* Floating Flash Toast Banner */}
+      {flashNotification && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md transition-all duration-300 ease-out">
+          <div
+            className={`flex items-center justify-between gap-3 rounded-2xl p-4 shadow-2xl border backdrop-blur-md transition-all ${
+              flashNotification.isAuth
+                ? "bg-slate-950/95 text-white border-amber-500/40 shadow-slate-950/50 ring-1 ring-amber-500/30"
+                : flashNotification.type === "success"
+                ? "bg-emerald-950/95 text-white border-emerald-500/40 shadow-emerald-950/40"
+                : "bg-rose-950/95 text-white border-rose-500/40 shadow-rose-950/40"
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              {flashNotification.isAuth ? (
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400 mt-0.5">
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+              ) : flashNotification.type === "success" ? (
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 mt-0.5">
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              ) : (
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-rose-500/20 text-rose-400 mt-0.5">
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              )}
+              <div>
+                <p className="text-xs font-semibold tracking-wide">
+                  {flashNotification.message}
+                </p>
+                {flashNotification.isAuth && (
+                  <p className="text-[11px] text-slate-300 mt-0.5">
+                    Sign in to your account to add items to your shopping bag.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {flashNotification.isAuth && (
+                <Link
+                  to="/login"
+                  className="rounded-lg bg-amber-400 px-3.5 py-1.5 text-xs font-bold text-slate-950 shadow-sm transition hover:bg-amber-300 active:scale-95"
+                >
+                  Log In
+                </Link>
+              )}
+              <button
+                type="button"
+                onClick={() => setFlashNotification(null)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-white/10 hover:text-white transition"
+                aria-label="Close notification"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
 
         {/* Back Link */}
@@ -576,17 +680,7 @@ export default function ProductDetail() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <button
                 type="button"
-                onClick={async () => {
-                  const variantId = selectedVariant ? selectedVariant._id : null;
-                  const result = await handleAddToCart(
-                    productId,
-                    variantId,
-                    quantity
-                  );
-                  if (result.success) {
-                    navigate("/cart");
-                  }
-                }}
+                onClick={() => onAddToCartAction(false)}
                 disabled={
                   (selectedVariant && selectedVariant.stock === 0) || cartLoading
                 }
@@ -600,17 +694,7 @@ export default function ProductDetail() {
 
               <button
                 type="button"
-                onClick={async () => {
-                  const variantId = selectedVariant ? selectedVariant._id : null;
-                  const result = await handleAddToCart(
-                    productId,
-                    variantId,
-                    quantity
-                  );
-                  if (result.success) {
-                    navigate("/cart");
-                  }
-                }}
+                onClick={() => onAddToCartAction(true)}
                 disabled={
                   (selectedVariant && selectedVariant.stock === 0) || cartLoading
                 }
