@@ -1,5 +1,13 @@
 // API base URL configuration
-export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || '/api';
+function getApiBaseUrl() {
+  const envUrl = import.meta.env.VITE_BACKEND_URL;
+  if (!envUrl) return '/api';
+  
+  const cleanUrl = envUrl.trim().replace(/\/+$/, "");
+  return cleanUrl.endsWith("/api") ? cleanUrl : `${cleanUrl}/api`;
+}
+
+export const API_BASE_URL = getApiBaseUrl();
 
 export const api = {
   auth: `${API_BASE_URL}/auth`,
