@@ -14,6 +14,8 @@ import { googleAuthController } from "./controllers/auth.controller.js";
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 // CORS must be first
 const allowedOrigins = [
   config.FRONTEND_ORIGIN,

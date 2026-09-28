@@ -6,6 +6,15 @@ const productApiInstance = axios.create({
     withCredentials: true
 });
 
+// Add Authorization header to all requests
+productApiInstance.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
 export async function createProduct(formData) {
 
     const response = await productApiInstance.post("/", formData)
