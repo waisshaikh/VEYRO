@@ -9,7 +9,7 @@ import { config } from "../config/config.js"
 export const createPendingPaymentController = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { orderId, amount, currency } = req.body;
+        const { orderId, amount, currency, shippingAddress } = req.body;
 
         if (!orderId || !amount) {
             return res.status(400).json({
@@ -67,6 +67,7 @@ export const createPendingPaymentController = async (req, res) => {
             },
             status: "pending",
             user: userId,
+            shippingAddress: shippingAddress || null,
             orderitems: orderItems
         });
 
@@ -150,6 +151,15 @@ export const verifyPaymentController = async (req, res) => {
 
         await existingPayment.save();
 
+        if (existingPayment.status === "paid") {
+            await cartModel.findOneAndUpdate(
+                { user: userId },
+                { $set: { items: [] } },
+                { new: true }
+            );
+            console.log('User cart cleared in DB after payment verification');
+        }
+
         console.log('Payment updated:', existingPayment._id, 'Status:', existingPayment.status);
 
         return res.status(200).json({
@@ -229,6 +239,7 @@ export const getUserPaymentsController = async (req, res) => {
     try {
         const userId = req.user._id
         const payments = await paymentModel.find({ user: userId })
+            .populate('orderitems.productId', 'tittle images price')
             .sort({ createdAt: -1 })
 
         return res.status(200).json({
@@ -306,9 +317,11 @@ export const getSellerOrdersController = async (req, res) => {
                             image: primaryImage
                         },
                         buyer: {
-                            name: payment.user?.name || "Customer",
-                            email: payment.user?.email || "N/A"
+                            name: payment.shippingAddress?.fullName || payment.user?.name || "Customer",
+                            email: payment.user?.email || "N/A",
+                            phone: payment.shippingAddress?.phone || "N/A"
                         },
+                        shippingAddress: payment.shippingAddress || null,
                         createdAt: payment.createdAt || (payment._id.getTimestamp ? payment._id.getTimestamp() : new Date())
                     });
                 }

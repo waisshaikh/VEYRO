@@ -120,9 +120,20 @@ export const Cart = () => {
   const user = useSelector(state=>state.user)
   const navigate = useNavigate();
 
- const {isLoading, Razorpay } = useRazorpay();
+  const {isLoading, Razorpay } = useRazorpay();
 
   const [localQuantities, setLocalQuantities] = useState({});
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [shippingAddress, setShippingAddress] = useState({
+    fullName: user?.fullname || "",
+    phone: user?.contact || "",
+    street: "",
+    city: "",
+    state: "",
+    pincode: "",
+  });
+  const [addressErrors, setAddressErrors] = useState({});
+  const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
 
   useEffect(() => {
     handleGetCart();
@@ -138,6 +149,16 @@ export const Cart = () => {
   }, [items]);
 
   useEffect(() => {
+    if (user) {
+      setShippingAddress((prev) => ({
+        ...prev,
+        fullName: prev.fullName || user.fullname || "",
+        phone: prev.phone || user.contact || "",
+      }));
+    }
+  }, [user]);
+
+  useEffect(() => {
     if (successMessage || error) {
       const timer = setTimeout(() => {
         resetMessages();
@@ -145,99 +166,144 @@ export const Cart = () => {
       return () => clearTimeout(timer);
     }
   }, [successMessage, error]);
-  
 
-async function handleCheckOut(){
-  const order = await handleCreateCardOrder()
-  console.log("Razorpay order:", order);
+  const validateShippingAddress = (addr) => {
+    const errors = {};
+    if (!addr.fullName?.trim()) errors.fullName = "Full name is required";
+    if (!addr.phone?.trim()) {
+      errors.phone = "Phone number is required";
+    } else if (!/^\+?\d{10,12}$/.test(addr.phone.replace(/[\s-]/g, ""))) {
+      errors.phone = "Enter a valid 10-digit mobile number";
+    }
+    if (!addr.street?.trim()) errors.street = "House/Street address is required";
+    if (!addr.city?.trim()) errors.city = "City is required";
+    if (!addr.state?.trim()) errors.state = "State is required";
+    if (!addr.pincode?.trim()) {
+      errors.pincode = "Pincode is required";
+    } else if (!/^\d{6}$/.test(addr.pincode.trim())) {
+      errors.pincode = "Enter a valid 6-digit pincode";
+    }
+    return errors;
+  };
 
-  // STEP 1: Create pending payment in database
-  let pendingPayment;
-  try {
-    const pendingResponse = await fetch(`${API_BASE_URL}/payment/create`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-      body: JSON.stringify({
-        orderId: order.id,
-        amount: order.amount,
-        currency: order.currency
-      })
-    });
+  const isAddressComplete =
+    shippingAddress.fullName?.trim() &&
+    shippingAddress.phone?.trim() &&
+    shippingAddress.street?.trim() &&
+    shippingAddress.city?.trim() &&
+    shippingAddress.state?.trim() &&
+    shippingAddress.pincode?.trim();
 
-    pendingPayment = await pendingResponse.json();
-    if (!pendingPayment.success) {
-      alert("Error creating payment: " + pendingPayment.message);
+  async function handleCheckOut() {
+    const errors = validateShippingAddress(shippingAddress);
+    if (Object.keys(errors).length > 0) {
+      setAddressErrors(errors);
+      setShowAddressModal(true);
       return;
     }
-    console.log("Pending payment created:", pendingPayment.paymentId);
-  } catch (err) {
-    console.error("Error creating pending payment:", err);
-    alert("Error creating payment. Please try again.");
-    return;
+    await startCheckoutFlow(shippingAddress);
   }
 
-  //  Open Razorpay popup
-  
-  const options = {
-      key: "rzp_test_TeZEEYeRAWLZGl",
-      amount: order.amount,
-      currency: order.currency,
-      name: "Veyro",
-      description: "Test Transaction",
-      order_id: order.id,
-      
-      handler: async function(response) {
-        console.log("Payment success:", response);
-        await updatePaymentStatus(order.id, response, "paid");
-      },
+  async function handleAddressSubmit(e) {
+    e.preventDefault();
+    const errors = validateShippingAddress(shippingAddress);
+    if (Object.keys(errors).length > 0) {
+      setAddressErrors(errors);
+      return;
+    }
+    setAddressErrors({});
+    setShowAddressModal(false);
+    await startCheckoutFlow(shippingAddress);
+  }
 
-      modal: {
-        ondismiss: async function() {
-          console.log("Payment cancelled by user");
-          await updatePaymentStatus(order.id, {}, "failed");
-        }
-      },
+  async function startCheckoutFlow(addressToUse) {
+    try {
+      setIsProcessingCheckout(true);
+      const order = await handleCreateCardOrder();
+      console.log("Razorpay order:", order);
 
-      prefill: {
-        name: user?.fullname,
-        email: user?.email,
-        contact: user?.contact,
-      },
-      
-      method: {
-        upi: true,
-        card: true,
-        netbanking: true,
-        wallet: true,
-      },
+      // STEP 1: Create pending payment in database with customer shipping details
+      const pendingResponse = await fetch(`${API_BASE_URL}/payment/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          orderId: order.id,
+          amount: order.amount,
+          currency: order.currency,
+          shippingAddress: addressToUse,
+        }),
+      });
 
-      theme: {
-        color: "#00C6FF",
-      },
-    };
+      const pendingPayment = await pendingResponse.json();
+      if (!pendingPayment.success) {
+        alert("Error creating payment: " + pendingPayment.message);
+        setIsProcessingCheckout(false);
+        return;
+      }
+      console.log("Pending payment created:", pendingPayment.paymentId);
 
-    const razorpayInstance = new Razorpay(options);
-    razorpayInstance.open();
+      // Open Razorpay popup
+      const options = {
+        key: "rzp_test_TeZEEYeRAWLZGl",
+        amount: order.amount,
+        currency: order.currency,
+        name: "Veyro",
+        description: "Purchase Checkout",
+        order_id: order.id,
+        handler: async function (response) {
+          console.log("Payment success:", response);
+          await updatePaymentStatus(order.id, response, "paid");
+        },
+        modal: {
+          ondismiss: async function () {
+            console.log("Payment cancelled by user");
+            await updatePaymentStatus(order.id, {}, "failed");
+            setIsProcessingCheckout(false);
+          },
+        },
+        prefill: {
+          name: addressToUse.fullName || user?.fullname,
+          email: user?.email,
+          contact: addressToUse.phone || user?.contact,
+        },
+        method: {
+          upi: true,
+          card: true,
+          netbanking: true,
+          wallet: true,
+        },
+        theme: {
+          color: "#00C6FF",
+        },
+      };
+
+      const razorpayInstance = new Razorpay(options);
+      razorpayInstance.open();
+    } catch (err) {
+      console.error("Error creating pending payment:", err);
+      alert("Error processing payment. Please try again.");
+      setIsProcessingCheckout(false);
+    }
   }
 
   // Helper function to update payment status
   async function updatePaymentStatus(orderId, response, status) {
     try {
       const backendResponse = await fetch(`${API_BASE_URL}/payment/verify`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({
           razorpay_payment_id: response.razorpay_payment_id,
           razorpay_order_id: orderId,
           razorpay_signature: response.razorpay_signature,
-          status: status
-        })
+          status: status,
+        }),
       });
 
       const data = await backendResponse.json();
@@ -245,8 +311,13 @@ async function handleCheckOut(){
 
       if (data.success) {
         if (status === "paid") {
+          try {
+            await handleClearCart();
+          } catch (e) {
+            console.error("Error clearing cart after payment:", e);
+          }
           // Navigate to order success page with order_id
-          navigate('/order-success', { state: { orderId: orderId } });
+          navigate("/order-success", { state: { orderId: orderId } });
         } else {
           alert("Payment was not completed. You can try again.");
         }
@@ -256,6 +327,8 @@ async function handleCheckOut(){
     } catch (err) {
       console.error("Error updating payment:", err);
       alert("Error processing payment. Please contact support.");
+    } finally {
+      setIsProcessingCheckout(false);
     }
   }
 
@@ -627,6 +700,34 @@ async function handleCheckOut(){
                 <span className="free-shipping-tag">Calculated at checkout</span>
               </div>
 
+              {/* Delivery Address Box */}
+              <div className="shipping-address-card">
+                <div className="address-card-header">
+                  <span className="address-title font-bold text-xs uppercase tracking-wider text-slate-700">
+                    📍 Shipping Details
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddressModal(true)}
+                    className="address-edit-btn text-xs text-teal-700 font-bold hover:underline cursor-pointer"
+                  >
+                    {isAddressComplete ? "Edit" : "+ Add Address"}
+                  </button>
+                </div>
+                {isAddressComplete ? (
+                  <div className="address-info-text text-xs text-slate-600 mt-1.5 space-y-0.5">
+                    <p className="font-semibold text-slate-900">{shippingAddress.fullName}</p>
+                    <p>📞 {shippingAddress.phone}</p>
+                    <p className="truncate">{shippingAddress.street}</p>
+                    <p>{shippingAddress.city}, {shippingAddress.state} - {shippingAddress.pincode}</p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-amber-700 mt-1 bg-amber-50 p-2 rounded-lg border border-amber-200">
+                    ⚠️ Address & contact number required before checkout.
+                  </p>
+                )}
+              </div>
+
               {/* Total = live price (what the customer actually pays) */}
               <div className="summary-row total">
                 <span>Total</span>
@@ -635,12 +736,14 @@ async function handleCheckOut(){
                 </span>
               </div>
 
-              <button type="button" className="btn-checkout" onClick={handleCheckOut}>
-                Proceed to Checkout
+              <button
+                type="button"
+                className="btn-checkout"
+                onClick={handleCheckOut}
+                disabled={isProcessingCheckout}
+              >
+                {isProcessingCheckout ? "Preparing Order..." : "Proceed to Checkout"}
               </button>
-
-
-              
 
               <div className="security-note">
                 <span>🔒</span>
@@ -648,6 +751,143 @@ async function handleCheckOut(){
               </div>
             </div>
           </aside>
+        </div>
+      )}
+
+      {/* Delivery Address Modal */}
+      {showAddressModal && (
+        <div className="cart-modal-backdrop" onClick={() => setShowAddressModal(false)}>
+          <div className="cart-modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="cart-modal-header">
+              <div>
+                <h3 className="cart-modal-title">📍 Delivery Address & Contact</h3>
+                <p className="cart-modal-subtitle">
+                  Please provide your phone number and complete shipping address for dispatch.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="cart-modal-close"
+                onClick={() => setShowAddressModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleAddressSubmit} className="cart-modal-form">
+              <div className="form-group">
+                <label className="form-label">Full Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Rahul Sharma"
+                  value={shippingAddress.fullName}
+                  onChange={(e) =>
+                    setShippingAddress({ ...shippingAddress, fullName: e.target.value })
+                  }
+                  className={`form-input ${addressErrors.fullName ? "input-error" : ""}`}
+                />
+                {addressErrors.fullName && (
+                  <span className="error-text">{addressErrors.fullName}</span>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Mobile Contact Number *</label>
+                <input
+                  type="tel"
+                  placeholder="e.g. 9876543210"
+                  value={shippingAddress.phone}
+                  onChange={(e) =>
+                    setShippingAddress({ ...shippingAddress, phone: e.target.value })
+                  }
+                  className={`form-input ${addressErrors.phone ? "input-error" : ""}`}
+                />
+                {addressErrors.phone && (
+                  <span className="error-text">{addressErrors.phone}</span>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">House / Flat / Street Address *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Flat 402, Sunshine Apartments, MG Road"
+                  value={shippingAddress.street}
+                  onChange={(e) =>
+                    setShippingAddress({ ...shippingAddress, street: e.target.value })
+                  }
+                  className={`form-input ${addressErrors.street ? "input-error" : ""}`}
+                />
+                {addressErrors.street && (
+                  <span className="error-text">{addressErrors.street}</span>
+                )}
+              </div>
+
+              <div className="form-row-three">
+                <div className="form-group">
+                  <label className="form-label">City *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Mumbai"
+                    value={shippingAddress.city}
+                    onChange={(e) =>
+                      setShippingAddress({ ...shippingAddress, city: e.target.value })
+                    }
+                    className={`form-input ${addressErrors.city ? "input-error" : ""}`}
+                  />
+                  {addressErrors.city && (
+                    <span className="error-text">{addressErrors.city}</span>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">State *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Maharashtra"
+                    value={shippingAddress.state}
+                    onChange={(e) =>
+                      setShippingAddress({ ...shippingAddress, state: e.target.value })
+                    }
+                    className={`form-input ${addressErrors.state ? "input-error" : ""}`}
+                  />
+                  {addressErrors.state && (
+                    <span className="error-text">{addressErrors.state}</span>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Pincode *</label>
+                  <input
+                    type="text"
+                    maxLength="6"
+                    placeholder="e.g. 400001"
+                    value={shippingAddress.pincode}
+                    onChange={(e) =>
+                      setShippingAddress({ ...shippingAddress, pincode: e.target.value })
+                    }
+                    className={`form-input ${addressErrors.pincode ? "input-error" : ""}`}
+                  />
+                  {addressErrors.pincode && (
+                    <span className="error-text">{addressErrors.pincode}</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="cart-modal-footer">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setShowAddressModal(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary" disabled={isProcessingCheckout}>
+                  {isProcessingCheckout ? "Opening Payment..." : "Save & Proceed to Payment 💳"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

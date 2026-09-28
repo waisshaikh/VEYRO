@@ -10,10 +10,10 @@ const CURRENCIES = [
 ];
 
 const PRESET_ATTRIBUTES = [
-  { key: "Size", presets: ["XS", "S", "M", "L", "XL", "XXL", "3XL"] },
-  { key: "Color", presets: ["Onyx Black", "Ivory White", "Champagne Gold", "Midnight Navy", "Burgundy", "Emerald", "Charcoal"] },
-  { key: "Fit", presets: ["Tailored", "Slim", "Relaxed", "Oversized", "Bespoke"] },
-  { key: "Material", presets: ["100% Raw Silk", "Merino Wool", "Egyptian Cotton", "Linen Blend", "Cashmere"] },
+  { key: "Size", presets: ["XS", "S", "M", "L", "XL", "XXL", "3XL", "26", "28", "30", "32", "34", "36", "38", "40", "42", "44"] },
+  { key: "Color", presets: ["Onyx Black", "Ivory White", "Champagne Gold", "Midnight Navy", "Burgundy", "Emerald", "Charcoal", "Light Blue", "Indigo"] },
+  { key: "Fit", presets: ["Tailored", "Slim", "Relaxed", "Oversized", "Bespoke", "Regular Fit", "Straight Fit"] },
+  { key: "Material", presets: ["100% Raw Silk", "Merino Wool", "Egyptian Cotton", "Linen Blend", "Cashmere", "Denim / Jeans"] },
 ];
 
 const SellerProductDetail = () => {

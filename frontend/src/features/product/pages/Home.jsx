@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { useSelector } from "react-redux";
 import { useProduct } from "../hook/useProduct";
 
-const POPULAR_TAGS = ["All", "Kurti", "Dress", "Blazer", "Silk", "Viscose", "Solid"];
+const POPULAR_TAGS = ["All", "Men", "Women", "Kurti", "Dress", "Blazer", "Silk", "Solid"];
 
 const Home = () => {
   const products = useSelector((state) => state.product.products);
@@ -47,11 +47,12 @@ const Home = () => {
     if (!searchQuery.trim() || searchQuery.toLowerCase() === "all") return list;
 
     const q = searchQuery.toLowerCase().trim();
-    return list.filter((p) => {
+
+    const isMatch = (p) => {
       const titleMatch = (p.tittle || "").toLowerCase().includes(q);
       const descMatch = (p.description || "").toLowerCase().includes(q);
       const priceMatch = String(p.price?.amount || "").includes(q);
-      
+
       const variantMatch = p.variants?.some((v) => {
         const attrValues = v.attributes
           ? Object.values(
@@ -64,7 +65,12 @@ const Home = () => {
       });
 
       return titleMatch || descMatch || priceMatch || variantMatch;
-    });
+    };
+
+    // Sort matching items to TOP, followed by non-matching
+    const matching = list.filter(isMatch);
+    const nonMatching = list.filter((p) => !isMatch(p));
+    return [...matching, ...nonMatching];
   }, [products, searchQuery]);
 
   const handleSearchSubmit = (e) => {
@@ -107,7 +113,7 @@ const Home = () => {
                 BUYER MARKETPLACE
               </span>
               <h1 className="text-2xl sm:text-4xl font-serif text-slate-950 font-semibold mt-1 tracking-tight">
-                {searchQuery ? `Products matching "${searchQuery}"` : "Shop Latest Products"}
+                Shop Latest Products
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 font-light mt-1">
                 Explore curated garments and exclusive collections from VEYRO sellers.
@@ -116,47 +122,19 @@ const Home = () => {
 
             <div className="flex items-center gap-3 shrink-0">
               {searchQuery && (
-                <button
-                  type="button"
-                  onClick={handleClearSearch}
-                  className="text-xs uppercase tracking-wider font-bold text-amber-700 hover:underline"
-                >
-                  Clear Filter
-                </button>
+                <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 px-3 py-1 rounded-full text-xs text-slate-700 font-medium">
+                  <span>Filter: <strong>"{searchQuery}"</strong></span>
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="ml-1 font-bold text-slate-400 hover:text-slate-900"
+                    title="Clear Filter"
+                  >
+                    ✕
+                  </button>
+                </div>
               )}
             </div>
-          </div>
-
-          {/* Quick Category Filter Pills */}
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mr-1">Popular:</span>
-            {POPULAR_TAGS.map((tag) => {
-              const isSelected =
-                (tag === "All" && !searchQuery) ||
-                searchQuery.toLowerCase() === tag.toLowerCase();
-
-              return (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => {
-                    if (tag === "All") {
-                      handleClearSearch();
-                    } else {
-                      setLocalSearch(tag);
-                      setSearchParams({ search: tag });
-                    }
-                  }}
-                  className={`text-xs font-semibold px-3.5 py-1 rounded-full border transition-all cursor-pointer ${
-                    isSelected
-                      ? "bg-slate-950 text-white border-slate-950 font-bold shadow-xs"
-                      : "bg-white text-slate-700 border-slate-200 hover:border-amber-400 hover:bg-amber-50/60"
-                  }`}
-                >
-                  {tag}
-                </button>
-              );
-            })}
           </div>
         </div>
 

@@ -11,7 +11,8 @@ const CURRENCIES = [
 
 const MAX_IMAGES = 7;
 
-const SIZE_PRESETS = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
+const ALPHA_SIZE_PRESETS = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
+const WAIST_NUMERIC_SIZES = ["26", "28", "30", "32", "34", "36", "38", "40", "42", "44"];
 
 export default function CreateProduct() {
   const navigate = useNavigate();
@@ -37,6 +38,8 @@ export default function CreateProduct() {
   const [apiError, setApiError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [colorInput, setColorInput] = useState("");
+  const [sizeInput, setSizeInput] = useState("");
+  const [sizeCategoryTab, setSizeCategoryTab] = useState("ALL"); // ALL, ALPHA, NUMERIC
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -405,7 +408,7 @@ export default function CreateProduct() {
               {/* Sizes & Colors Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Sizes */}
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
                     <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
                       Available Sizes
@@ -416,36 +419,198 @@ export default function CreateProduct() {
                       </span>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {SIZE_PRESETS.map((size) => {
-                      const isSelected = formData.selectedSizes.includes(size);
-                      return (
-                        <button
-                          key={size}
-                          type="button"
-                          onClick={() => {
-                            setFormData((prev) => {
-                              const updated = prev.selectedSizes.includes(size)
-                                ? prev.selectedSizes.filter((s) => s !== size)
-                                : [...prev.selectedSizes, size];
-                              return { ...prev, selectedSizes: updated };
-                            });
+
+                  {/* Size Category Filter Tabs */}
+                  <div className="flex items-center gap-1.5 border-b border-slate-200 pb-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setSizeCategoryTab("ALL")}
+                      className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                        sizeCategoryTab === "ALL"
+                          ? "bg-slate-900 text-white"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      }`}
+                    >
+                      All Presets
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSizeCategoryTab("ALPHA")}
+                      className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                        sizeCategoryTab === "ALPHA"
+                          ? "bg-slate-900 text-white"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      }`}
+                    >
+                      Standard (XS-3XL)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSizeCategoryTab("NUMERIC")}
+                      className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                        sizeCategoryTab === "NUMERIC"
+                          ? "bg-slate-900 text-white"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      }`}
+                    >
+                      👖 Jeans / Pants Waist (26-44)
+                    </button>
+                  </div>
+
+                  {/* Size Pills Container */}
+                  <div className="space-y-2">
+                    {(sizeCategoryTab === "ALL" || sizeCategoryTab === "ALPHA") && (
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                          Standard Tops / Shirts:
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {ALPHA_SIZE_PRESETS.map((size) => {
+                            const isSelected = formData.selectedSizes.includes(size);
+                            return (
+                              <button
+                                key={size}
+                                type="button"
+                                onClick={() => {
+                                  setFormData((prev) => {
+                                    const updated = prev.selectedSizes.includes(size)
+                                      ? prev.selectedSizes.filter((s) => s !== size)
+                                      : [...prev.selectedSizes, size];
+                                    return { ...prev, selectedSizes: updated };
+                                  });
+                                  if (errors.sizes) {
+                                    setErrors((prev) => ({ ...prev, sizes: "" }));
+                                  }
+                                }}
+                                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all duration-150 cursor-pointer ${
+                                  isSelected
+                                    ? "bg-teal-600 text-white border border-teal-700 shadow-xs ring-2 ring-teal-600/30 scale-105"
+                                    : "bg-white text-slate-700 border border-slate-300 hover:border-teal-500 hover:bg-teal-50/60 shadow-2xs"
+                                }`}
+                              >
+                                {isSelected && <span className="mr-1">✓</span>}
+                                {size}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {(sizeCategoryTab === "ALL" || sizeCategoryTab === "NUMERIC") && (
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                          👖 Pants / Jeans Waist (Inches):
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {WAIST_NUMERIC_SIZES.map((size) => {
+                            const isSelected = formData.selectedSizes.includes(size);
+                            return (
+                              <button
+                                key={size}
+                                type="button"
+                                onClick={() => {
+                                  setFormData((prev) => {
+                                    const updated = prev.selectedSizes.includes(size)
+                                      ? prev.selectedSizes.filter((s) => s !== size)
+                                      : [...prev.selectedSizes, size];
+                                    return { ...prev, selectedSizes: updated };
+                                  });
+                                  if (errors.sizes) {
+                                    setErrors((prev) => ({ ...prev, sizes: "" }));
+                                  }
+                                }}
+                                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all duration-150 cursor-pointer ${
+                                  isSelected
+                                    ? "bg-teal-600 text-white border border-teal-700 shadow-xs ring-2 ring-teal-600/30 scale-105"
+                                    : "bg-white text-slate-800 border border-slate-300 hover:border-teal-500 hover:bg-teal-50/60 shadow-2xs"
+                                }`}
+                              >
+                                {isSelected && <span className="mr-1">✓</span>}
+                                {size}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Custom Size Input */}
+                  <div className="flex gap-2 pt-1">
+                    <input
+                      type="text"
+                      placeholder="Add custom size (e.g. 29, 31, Free Size)..."
+                      value={sizeInput}
+                      onChange={(e) => setSizeInput(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter" && sizeInput.trim()) {
+                          e.preventDefault();
+                          const sz = sizeInput.trim();
+                          if (!formData.selectedSizes.includes(sz)) {
+                            setFormData((prev) => ({
+                              ...prev,
+                              selectedSizes: [...prev.selectedSizes, sz],
+                            }));
                             if (errors.sizes) {
                               setErrors((prev) => ({ ...prev, sizes: "" }));
                             }
-                          }}
-                          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
-                            isSelected
-                              ? "bg-teal-600 text-white border-2 border-teal-700 shadow-sm ring-2 ring-teal-600/30 scale-105"
-                              : "bg-white text-slate-700 border border-slate-300 hover:border-teal-500 hover:bg-teal-50/60 hover:text-teal-800 shadow-2xs active:scale-95"
-                          }`}
-                        >
-                          {isSelected && <span className="mr-1">✓</span>}
-                          {size}
-                        </button>
-                      );
-                    })}
+                          }
+                          setSizeInput("");
+                        }
+                      }}
+                      className="flex-1 px-3.5 py-2 rounded-xl border border-slate-300 focus:border-teal-600 bg-slate-50 focus:bg-white text-slate-900 font-medium text-xs focus:ring-2 focus:ring-teal-600/20 focus:outline-none transition-all shadow-2xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (sizeInput.trim()) {
+                          const sz = sizeInput.trim();
+                          if (!formData.selectedSizes.includes(sz)) {
+                            setFormData((prev) => ({
+                              ...prev,
+                              selectedSizes: [...prev.selectedSizes, sz],
+                            }));
+                            if (errors.sizes) {
+                              setErrors((prev) => ({ ...prev, sizes: "" }));
+                            }
+                          }
+                          setSizeInput("");
+                        }
+                      }}
+                      className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs uppercase tracking-wider transition-all active:scale-95 shadow-xs cursor-pointer"
+                    >
+                      + Add
+                    </button>
                   </div>
+
+                  {/* Selected Sizes Tags */}
+                  {formData.selectedSizes.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {formData.selectedSizes.map((sz) => (
+                        <span
+                          key={sz}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-teal-600 text-white rounded-md text-xs font-bold shadow-xs"
+                        >
+                          <span>{sz}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData((prev) => ({
+                                ...prev,
+                                selectedSizes: prev.selectedSizes.filter((s) => s !== sz),
+                              }));
+                            }}
+                            className="w-3.5 h-3.5 rounded-full bg-teal-800 hover:bg-rose-600 text-white flex items-center justify-center text-[10px] font-bold transition-colors cursor-pointer"
+                            title="Remove size"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
                   {errors.sizes && (
                     <p className="text-xs text-red-600 font-medium">{errors.sizes}</p>
                   )}

@@ -40,6 +40,15 @@ const paymentSchema = new mongoose.Schema({
         required: true
     },
 
+    shippingAddress: {
+        fullName: String,
+        phone: String,
+        street: String,
+        city: String,
+        state: String,
+        pincode: String
+    },
+
     orderitems: [orderItemSchema]
 }, { timestamps: true });
 

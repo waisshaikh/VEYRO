@@ -1,16 +1,17 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link} from "react-router";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useProduct } from "../hook/useProduct";
 import { useSelector } from "react-redux";
+import { getSellerOrdersApi, getUnreadOrdersCount } from "../services/sellerOrders.api";
 
 const Dashboard = () => {
   const { handleGetSellerproduct } = useProduct();
   const sellerProducts = useSelector((state) => state.product.sellerProducts);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [newOrdersCount, setNewOrdersCount] = useState(0);
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchProducts() {
@@ -29,7 +30,25 @@ const Dashboard = () => {
       }
     }
 
+    async function fetchOrdersCount() {
+      try {
+        const res = await getSellerOrdersApi();
+        if (res?.success && Array.isArray(res.orders)) {
+          const count = getUnreadOrdersCount(res.orders);
+          setNewOrdersCount(count);
+        }
+      } catch (e) {}
+    }
+
     fetchProducts();
+    fetchOrdersCount();
+
+    const handleSeen = () => {
+      setNewOrdersCount(0);
+    };
+
+    window.addEventListener("seller_orders_seen", handleSeen);
+    return () => window.removeEventListener("seller_orders_seen", handleSeen);
   }, []);
 
   const products = useMemo(() => {
@@ -72,9 +91,14 @@ const Dashboard = () => {
           <div className="flex items-center gap-2.5">
             <Link
               to="/seller/orders"
-              className="rounded-full border border-teal-600 bg-teal-50/50 px-4 py-2 text-xs font-bold text-teal-800 transition hover:bg-teal-100 flex items-center gap-1.5"
+              className="relative rounded-full border border-teal-600 bg-teal-50/50 px-4 py-2 text-xs font-bold text-teal-800 transition hover:bg-teal-100 flex items-center gap-2 shadow-xs"
             >
               <span>📦 View Customer Orders</span>
+              {newOrdersCount > 0 && (
+                <span className="flex items-center gap-1 rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-black text-white shadow-2xs">
+                  {newOrdersCount} NEW
+                </span>
+              )}
             </Link>
 
             <Link
@@ -120,13 +144,20 @@ const Dashboard = () => {
             </div>
             <Link
               to="/seller/orders"
-              className="rounded-lg border border-teal-200 bg-teal-50/60 p-2.5 shadow-sm hover:bg-teal-100/80 transition"
+              className="relative rounded-lg border border-teal-200 bg-teal-50/60 p-2.5 shadow-sm hover:bg-teal-100/80 transition flex flex-col justify-between"
             >
-              <p className="text-[10px] font-bold uppercase tracking-wider text-teal-800">
-                Orders →
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-teal-800">
+                  Orders →
+                </p>
+                {newOrdersCount > 0 && (
+                  <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-black text-white">
+                    {newOrdersCount}
+                  </span>
+                )}
+              </div>
               <p className="mt-1 text-xs font-bold text-teal-900">
-                Manage Dispatch
+                {newOrdersCount > 0 ? `${newOrdersCount} New Orders!` : "Manage Dispatch"}
               </p>
             </Link>
           </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router";
 import { useSelector } from "react-redux";
 import { useAuth } from "../../features/auth/hook/useAuth.js";
+import { getSellerOrdersApi, getUnreadOrdersCount } from "../../features/product/services/sellerOrders.api.js";
 
 const Nav = () => {
   const navigate = useNavigate();
@@ -16,10 +17,37 @@ const Nav = () => {
 
   const currentSearch = searchParams.get("search") || "";
   const [navSearch, setNavSearch] = useState(currentSearch);
+  const [newSellerOrdersCount, setNewSellerOrdersCount] = useState(0);
 
   useEffect(() => {
     setNavSearch(currentSearch);
   }, [currentSearch]);
+
+  const isSeller = user?.role === "seller";
+
+  const fetchUnreadOrders = () => {
+    if (isSeller) {
+      getSellerOrdersApi()
+        .then((res) => {
+          if (res?.success && Array.isArray(res.orders)) {
+            const count = getUnreadOrdersCount(res.orders);
+            setNewSellerOrdersCount(count);
+          }
+        })
+        .catch(() => {});
+    }
+  };
+
+  useEffect(() => {
+    fetchUnreadOrders();
+
+    const handleSeen = () => {
+      setNewSellerOrdersCount(0);
+    };
+
+    window.addEventListener("seller_orders_seen", handleSeen);
+    return () => window.removeEventListener("seller_orders_seen", handleSeen);
+  }, [isSeller, location.pathname]);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -57,7 +85,6 @@ const Nav = () => {
     navigate("/login");
   };
 
-  const isSeller = user?.role === "seller";
   const userDisplayName = user?.fullname || user?.email?.split("@")[0] || "User";
   const userInitial = userDisplayName.charAt(0).toUpperCase();
 
@@ -75,14 +102,33 @@ const Nav = () => {
           </Link>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+          <nav className="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-wider text-slate-600">
             <Link
               to="/"
+              onClick={() => setSearchParams({})}
               className={`transition hover:text-slate-950 ${
-                location.pathname === "/" ? "font-semibold text-slate-950" : ""
+                location.pathname === "/" && !currentSearch ? "font-black text-slate-950 border-b-2 border-slate-950 pb-0.5" : ""
               }`}
             >
               Shop
+            </Link>
+
+            <Link
+              to="/?search=men"
+              className={`transition hover:text-slate-950 ${
+                currentSearch.toLowerCase() === "men" ? "font-black text-slate-950 border-b-2 border-slate-950 pb-0.5" : ""
+              }`}
+            >
+              Men
+            </Link>
+
+            <Link
+              to="/?search=women"
+              className={`transition hover:text-slate-950 ${
+                currentSearch.toLowerCase() === "women" ? "font-black text-slate-950 border-b-2 border-slate-950 pb-0.5" : ""
+              }`}
+            >
+              Women
             </Link>
 
             {isSeller && (
@@ -91,32 +137,37 @@ const Nav = () => {
                   to="/seller/dashboard"
                   className={`flex items-center gap-1.5 transition hover:text-slate-950 ${
                     location.pathname === "/seller/dashboard"
-                      ? "font-semibold text-slate-950"
+                      ? "font-black text-slate-950"
                       : ""
                   }`}
                 >
                   <span>Dashboard</span>
-                  <span className="rounded bg-teal-50 px-1.5 py-0.5 text-[10px] font-bold text-teal-700 uppercase">
+                  <span className="rounded bg-teal-50 px-1.5 py-0.5 text-[9px] font-bold text-teal-700 uppercase">
                     Seller
                   </span>
                 </Link>
 
                 <Link
                   to="/seller/orders"
-                  className={`flex items-center gap-1 transition hover:text-slate-950 ${
+                  className={`relative flex items-center gap-1.5 transition hover:text-slate-950 ${
                     location.pathname === "/seller/orders"
-                      ? "font-semibold text-slate-950"
+                      ? "font-black text-slate-950"
                       : ""
                   }`}
                 >
                   <span>Orders</span>
+                  {newSellerOrdersCount > 0 && (
+                    <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-black text-white shadow-2xs">
+                      {newSellerOrdersCount}
+                    </span>
+                  )}
                 </Link>
 
                 <Link
                   to="/seller/create-product"
                   className={`transition hover:text-slate-950 ${
                     location.pathname === "/seller/create-product"
-                      ? "font-semibold text-slate-950"
+                      ? "font-black text-slate-950"
                       : ""
                   }`}
                 >
@@ -132,24 +183,16 @@ const Nav = () => {
           <div className="relative flex items-center w-full">
             <input
               type="text"
-              placeholder="Search products, sizes, colors..."
+              placeholder="Search products, sizes, colors... (Press Enter)"
               value={navSearch}
-              onChange={(e) => {
-                const val = e.target.value;
-                setNavSearch(val);
-                if (location.pathname === "/") {
-                  if (val.trim()) {
-                    setSearchParams({ search: val.trim() });
-                  } else {
-                    setSearchParams({});
-                  }
-                }
-              }}
+              onChange={(e) => setNavSearch(e.target.value)}
               className="w-full bg-slate-100/90 focus:bg-white border border-slate-200 focus:border-amber-500 rounded-full py-2 pl-9 pr-8 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 transition-all shadow-2xs"
             />
-            <svg className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            <button type="submit" className="absolute left-3 text-slate-400 hover:text-slate-600 pointer-events-auto">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
             {navSearch && (
               <button
                 type="button"
